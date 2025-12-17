@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>Clock Trainer</value>
+  </data>
+  <data name="LanguageLabel" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="LanguageDutch" xml:space="preserve">
+    <value>Dutch</value>
+  </data>
+  <data name="LanguageEnglish" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="ModeLabel" xml:space="preserve">
+    <value>Game mode</value>
+  </data>
+  <data name="ModeClockToTime" xml:space="preserve">
+    <value>Clock to time</value>
+  </data>
+  <data name="ModeTimeToClock" xml:space="preserve">
+    <value>Time to clock</value>
+  </data>
+  <data name="ModeRandom" xml:space="preserve">
+    <value>Random</value>
+  </data>
+  <data name="ModeRandomDetail" xml:space="preserve">
+    <value>Mix both challenges.</value>
+  </data>
+  <data name="ClockToTimeInstruction" xml:space="preserve">
+    <value>Read the clock and type the matching time (e.g. 15:30).</value>
+  </data>
+  <data name="TimeToClockInstruction" xml:space="preserve">
+    <value>Move the hands to the requested time.</value>
+  </data>
+  <data name="EntryPlaceholder" xml:space="preserve">
+    <value>Example: 03:45</value>
+  </data>
+  <data name="SubmitAnswer" xml:space="preserve">
+    <value>Check</value>
+  </data>
+  <data name="NextChallenge" xml:space="preserve">
+    <value>Next challenge</value>
+  </data>
+  <data name="ResultCorrect" xml:space="preserve">
+    <value>Great job!</value>
+  </data>
+  <data name="ResultIncorrect" xml:space="preserve">
+    <value>Close, try again.</value>
+  </data>
+  <data name="PromptLabel" xml:space="preserve">
+    <value>Requested time</value>
+  </data>
+  <data name="HourLabel" xml:space="preserve">
+    <value>Hour hand</value>
+  </data>
+  <data name="MinuteLabel" xml:space="preserve">
+    <value>Minute hand</value>
+  </data>
+  <data name="SecondLabel" xml:space="preserve">
+    <value>Second hand</value>
+  </data>
+  <data name="ClockStatusLabel" xml:space="preserve">
+    <value>Active challenge</value>
+  </data>
+</root>

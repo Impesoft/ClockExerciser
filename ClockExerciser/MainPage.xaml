@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:sfRadialGauge="clr-namespace:Syncfusion.Maui.Gauges;assembly=Syncfusion.Maui.Gauges"
+             x:Class="ClockExerciser.MainPage"
+             Title="{Binding AppTitle}">
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="18">
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                <VerticalStackLayout>
+                    <Label Text="{Binding LanguageLabel}" FontAttributes="Bold" />
+                    <Picker ItemsSource="{Binding Languages}"
+                            ItemDisplayBinding="{Binding DisplayName}"
+                            SelectedItem="{Binding SelectedLanguage}" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1">
+                    <Label Text="{Binding ModeLabel}" FontAttributes="Bold" />
+                    <Picker ItemsSource="{Binding ModeOptions}"
+                            ItemDisplayBinding="{Binding Label}"
+                            SelectedItem="{Binding SelectedMode}" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <Label Text="{Binding InstructionText}"
+                   Style="{StaticResource Body}" />
+
+            <Border Padding="-20" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}" HorizontalOptions="Center">
+                <Border.StrokeShape>
+                    <Ellipse />
+                </Border.StrokeShape>
+                <sfRadialGauge:SfRadialGauge HeightRequest="320" WidthRequest="320">
+                    <sfRadialGauge:SfRadialGauge.Axes>
+                        <sfRadialGauge:RadialAxis Minimum="0"
+                                                  Maximum="12"
+                                                  Interval="1"
+                                                  MinorTicksPerInterval="4"
+                                                  StartAngle="270"
+                                                  EndAngle="270"
+                                                  ShowLabels="True"
+                                                  ShowAxisLine="False"
+                                                  ShowLastLabel="False"
+                                                  LabelCreated="HourAxis_LabelCreated">
+                            <sfRadialGauge:RadialAxis.Pointers>
+                                <sfRadialGauge:NeedlePointer Value="{Binding HourPointerValue}"
+                                                             NeedleLengthUnit="Factor"
+                                                             NeedleLength="0.60"
+                                                             NeedleStartWidth="5"
+                                                             NeedleEndWidth="5"
+                                                             KnobSizeUnit="Factor"
+                                                             KnobRadius="0.08"
+                                                             TailLength="0.05"
+                                                             TailLengthUnit="Factor"
+                                                             NeedleFill="#1b1b1b" />
+                                <sfRadialGauge:NeedlePointer Value="{Binding MinutePointerValue}"
+                                                             NeedleLengthUnit="Factor"
+                                                             NeedleLength="0.90"
+                                                             NeedleStartWidth="4"
+                                                             NeedleEndWidth="4"
+                                                             KnobSizeUnit="Factor"
+                                                             KnobRadius="0.08"
+                                                             NeedleFill="#333333" />
+                                <sfRadialGauge:NeedlePointer Value="{Binding SecondPointerValue}"
+                                                             NeedleLengthUnit="Factor"
+                                                             NeedleLength="1"
+                                                             NeedleStartWidth="1"
+                                                             NeedleEndWidth="1"
+                                                             KnobSizeUnit="Factor"
+                                                             KnobRadius="0.05"
+                                                             NeedleFill="#d84315" />
+                            </sfRadialGauge:RadialAxis.Pointers>
+                        </sfRadialGauge:RadialAxis>
+                    </sfRadialGauge:SfRadialGauge.Axes>
+                </sfRadialGauge:SfRadialGauge>
+            </Border>
+
+            <VerticalStackLayout Spacing="4" IsVisible="{Binding IsTimeToClock}">
+                <Label Text="{Binding PromptLabel}" FontAttributes="Bold" />
+                <Label Text="{Binding PromptText}" />
+                <Label Text="{Binding PromptDigital}" FontAttributes="Bold" />
+            </VerticalStackLayout>
+
+            <Entry Placeholder="{Binding EntryPlaceholder}"
+                   IsVisible="{Binding IsClockToTime}"
+                   Keyboard="Chat"
+                   ClearButtonVisibility="WhileEditing"
+                   Text="{Binding AnswerText, Mode=TwoWay}" />
+
+            <VerticalStackLayout Spacing="8" IsVisible="{Binding IsTimeToClock}">
+                <Label Text="{Binding HourLabel}" FontAttributes="Bold" />
+                <Slider Minimum="0"
+                        Maximum="12"
+                        Value="{Binding UserHourValue, Mode=TwoWay}" />
+                <Label Text="{Binding MinuteLabel}" FontAttributes="Bold" />
+                <Slider Minimum="0"
+                        Maximum="59"
+                        Value="{Binding UserMinuteValue, Mode=TwoWay}" />
+                <Label Text="{Binding SecondLabel}" FontAttributes="Bold" />
+                <Slider Minimum="0"
+                        Maximum="59"
+                        Value="{Binding UserSecondValue, Mode=TwoWay}" />
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                <Button Text="{Binding SubmitText}"
+                        Command="{Binding CheckAnswerCommand}"
+                        IsEnabled="{Binding CanSubmit}" />
+                <Button Grid.Column="1"
+                        Text="{Binding NextText}"
+                        Command="{Binding NextChallengeCommand}" />
+            </Grid>
+
+            <Label Text="{Binding ResultMessage}"
+                   IsVisible="{Binding ResultVisible}"
+                   HorizontalTextAlignment="Center"
+                   FontAttributes="Bold">
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label"
+                                Binding="{Binding ResultSuccess}"
+                                Value="True">
+                        <Setter Property="TextColor" Value="#2e7d32" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Label"
+                                Binding="{Binding ResultSuccess}"
+                                Value="False">
+                        <Setter Property="TextColor" Value="#c62828" />
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
