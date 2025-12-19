@@ -361,3 +361,11 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Android Signing Files
+*.keystore
+*.jks
+signing.properties
+
+# MAUI local secrets (do not commit)
+ClockExerciser/secrets.json
+

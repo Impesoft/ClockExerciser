@@ -8,25 +8,20 @@ public sealed class LanguageOption : INotifyPropertyChanged
 {
     private string _displayName;
 
-    public LanguageOption(string resourceKey, string cultureName)
+    public LanguageOption(string nativeName, string cultureName)
     {
-        ResourceKey = resourceKey;
+        NativeName = nativeName;
         Culture = new CultureInfo(cultureName);
-        _displayName = cultureName;
+        _displayName = nativeName;
     }
 
-    public string ResourceKey { get; }
+    public string NativeName { get; }
     public CultureInfo Culture { get; }
 
     public string DisplayName
     {
         get => _displayName;
         private set => SetProperty(ref _displayName, value);
-    }
-
-    public void UpdateDisplay(Func<string, string> textProvider)
-    {
-        DisplayName = textProvider(ResourceKey);
     }
 
     public override string ToString() => DisplayName;

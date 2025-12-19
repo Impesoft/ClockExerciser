@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:sfRadialGauge="clr-namespace:Syncfusion.Maui.Gauges;assembly=Syncfusion.Maui.Gauges"
+             x:Class="ClockExerciser.MenuPage"
+             Title="{Binding AppTitle}"
+             Shell.NavBarIsVisible="False">
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="32" VerticalOptions="Center">
+            
+            <!-- App Title & Branding -->
+            <VerticalStackLayout Spacing="8">
+                <Label Text="{Binding MenuTitle}"
+                       FontSize="36"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Center" />
+                <Label Text="{Binding MenuSubtitle}"
+                       FontSize="18"
+                       HorizontalTextAlignment="Center"
+                       Opacity="0.7" />
+            </VerticalStackLayout>
+
+            <!-- Animated Clock -->
+            <Border HeightRequest="180" 
+                    WidthRequest="180"
+                    HorizontalOptions="Center"
+                    BackgroundColor="{AppThemeBinding Light=#e3f2fd, Dark=#1e3a5f}"
+                    StrokeThickness="2"
+                    Stroke="{AppThemeBinding Light=#2196f3, Dark=#1976d2}">
+                <Border.StrokeShape>
+                    <Ellipse />
+                </Border.StrokeShape>
+                <sfRadialGauge:SfRadialGauge HeightRequest="180" WidthRequest="180">
+                    <sfRadialGauge:SfRadialGauge.Axes>
+                        <sfRadialGauge:RadialAxis Minimum="0"
+                                                  Maximum="12"
+                                                  Interval="1"
+                                                  MinorTicksPerInterval="4"
+                                                  StartAngle="270"
+                                                  EndAngle="270"
+                                                  ShowLabels="True"
+                                                  ShowAxisLine="False"
+                                                  ShowLastLabel="False"
+                                                  LabelCreated="HourAxis_LabelCreated">
+                            <sfRadialGauge:RadialAxis.Pointers>
+                                <sfRadialGauge:NeedlePointer Value="3"
+                                                             NeedleLengthUnit="Factor"
+                                                             NeedleLength="0.5"
+                                                             NeedleStartWidth="6"
+                                                             NeedleEndWidth="3"
+                                                             KnobSizeUnit="Factor"
+                                                             KnobRadius="0.08"
+                                                             TailLength="0.05"
+                                                             TailLengthUnit="Factor"
+                                                             NeedleFill="#1b1b1b" />
+                                <sfRadialGauge:NeedlePointer Value="3"
+                                                             NeedleLengthUnit="Factor"
+                                                             NeedleLength="0.75"
+                                                             NeedleStartWidth="4"
+                                                             NeedleEndWidth="2"
+                                                             KnobSizeUnit="Factor"
+                                                             KnobRadius="0.08"
+                                                             NeedleFill="#333333" />
+                                <sfRadialGauge:NeedlePointer Value="0"
+                                                             NeedleLengthUnit="Factor"
+                                                             NeedleLength="0.85"
+                                                             NeedleStartWidth="1"
+                                                             NeedleEndWidth="1"
+                                                             KnobSizeUnit="Factor"
+                                                             KnobRadius="0.05"
+                                                             NeedleFill="#d84315" />
+                            </sfRadialGauge:RadialAxis.Pointers>
+                        </sfRadialGauge:RadialAxis>
+                    </sfRadialGauge:SfRadialGauge.Axes>
+                </sfRadialGauge:SfRadialGauge>
+            </Border>
+
+            <!-- Mode Selection Buttons -->
+            <VerticalStackLayout Spacing="16">
+                <Button Text="{Binding ClockToTimeButton}"
+                        Command="{Binding ClockToTimeCommand}"
+                        FontSize="18"
+                        HeightRequest="60"
+                        BackgroundColor="{AppThemeBinding Light=#2196f3, Dark=#1976d2}"
+                        TextColor="White"
+                        CornerRadius="12" />
+                
+                <Button Text="{Binding TimeToClockButton}"
+                        Command="{Binding TimeToClockCommand}"
+                        FontSize="18"
+                        HeightRequest="60"
+                        BackgroundColor="{AppThemeBinding Light=#4caf50, Dark=#388e3c}"
+                        TextColor="White"
+                        CornerRadius="12" />
+                
+                <Button Text="{Binding RandomModeButton}"
+                        Command="{Binding RandomModeCommand}"
+                        FontSize="18"
+                        HeightRequest="60"
+                        BackgroundColor="{AppThemeBinding Light=#ff9800, Dark=#f57c00}"
+                        TextColor="White"
+                        CornerRadius="12" />
+            </VerticalStackLayout>
+
+            <!-- Language Selection -->
+            <VerticalStackLayout Spacing="8">
+                <Label Text="{Binding LanguageLabel}" 
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Center" />
+                <Picker ItemsSource="{Binding Languages}"
+                        ItemDisplayBinding="{Binding DisplayName}"
+                        SelectedItem="{Binding SelectedLanguage}"
+                        HorizontalOptions="Center"
+                        WidthRequest="200" />
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

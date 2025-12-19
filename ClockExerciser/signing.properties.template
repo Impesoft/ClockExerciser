@@ -1,0 +1,22 @@
+# Android Signing Configuration Template
+# DO NOT COMMIT THIS FILE TO GIT!
+# Copy this file to 'signing.properties' and fill in your actual values
+
+# Path to your keystore file (use \\ for Windows paths)
+# Example: C:\\Users\\YourName\\Documents\\clockexerciser.keystore
+keystore.path=PATH_TO_YOUR_KEYSTORE
+
+# Your keystore password
+keystore.password=YOUR_KEYSTORE_PASSWORD
+
+# Your key alias (default: clockexerciser)
+key.alias=clockexerciser
+
+# Your key password (can be same as keystore password)
+key.password=YOUR_KEY_PASSWORD
+
+# --- Instructions ---
+# 1. Copy this file to 'signing.properties' (remove .template)
+# 2. Fill in your actual passwords and paths
+# 3. Make sure signing.properties is in .gitignore
+# 4. Keep this information secure and backed up!

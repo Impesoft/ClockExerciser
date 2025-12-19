@@ -1,9 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net10.0-android;net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
-
+		<AndroidPackageFormat>apk</AndroidPackageFormat>
+		
+		<!-- Android Deployment Settings -->
+		<EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+		
 		<!-- Note for MacCatalyst:
 		The default runtime is maccatalyst-x64, except in Release config, in which case the default is maccatalyst-x64;maccatalyst-arm64.
 		When specifying both architectures, use the plural <RuntimeIdentifiers> instead of the singular <RuntimeIdentifier>.
@@ -22,10 +26,10 @@
 		<ApplicationTitle>ClockExerciser</ApplicationTitle>
 
 		<!-- App Identifier -->
-		<ApplicationId>com.companyname.clockexerciser</ApplicationId>
+		<ApplicationId>com.clockexerciser.app</ApplicationId>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+		<ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
 
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
@@ -38,15 +42,24 @@
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 	</PropertyGroup>
 
+	<!-- Android Release Signing Configuration -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Release' And $(TargetFramework.Contains('android'))">
+		<AndroidKeyStore>True</AndroidKeyStore>
+		<AndroidSigningKeyStore>C:\Users\ward\Documents\clockexerciser.keystore</AndroidSigningKeyStore>
+		<AndroidSigningKeyAlias>clockexerciser</AndroidSigningKeyAlias>
+		<AndroidSigningKeyPass>$(ANDROID_KEY_PASS)</AndroidSigningKeyPass>
+		<AndroidSigningStorePass>$(ANDROID_STORE_PASS)</AndroidSigningStorePass>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
+		<MauiIcon Include="Resources\Images\appicon.svg" Color="#2196F3" />
 
 		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#E3F2FD" BaseSize="456,456" />
 
 		<!-- Images -->
-		<MauiImage Include="Resources\Images\*" />
+		<MauiImage Include="Resources\Images\*" Exclude="Resources\Images\appicon.svg" />
 		<MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185" />
 		
 		<!-- Custom Fonts -->
@@ -57,24 +70,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
 		<PackageReference Include="Syncfusion.Maui.Gauges" Version="32.1.19" />
+		<PackageReference Include="Plugin.Maui.Audio" Version="3.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="Resources\Strings\AppResources.Designer.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>AppResources.resx</DependentUpon>
-	  </Compile>
-	</ItemGroup>
-
-	<ItemGroup>
-		<EmbeddedResource Update="Resources\Strings\AppResources.resx">
-			<Generator>ResXFileCodeGenerator</Generator>
-			<LastGenOutput>AppResources.Designer.cs</LastGenOutput>
-		</EmbeddedResource>
 		<EmbeddedResource Update="Resources\Strings\AppResources.en.resx">
 			<Generator></Generator>
 		</EmbeddedResource>
@@ -82,6 +86,9 @@
 
 	<ItemGroup>
 	  <MauiXaml Update="MainPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="MenuPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	</ItemGroup>

@@ -1,15 +1,15 @@
-﻿using ClockExerciser.Helpers;
+using ClockExerciser.Helpers;
 using ClockExerciser.ViewModels;
 using Syncfusion.Maui.Gauges;
 
 namespace ClockExerciser
 {
-    public partial class MainPage : ContentPage
+    public partial class MenuPage : ContentPage
     {
-        public MainPage()
+        public MenuPage()
         {
             InitializeComponent();
-            BindingContext = ServiceHelper.GetRequiredService<GameViewModel>();
+            BindingContext = ServiceHelper.GetRequiredService<MenuViewModel>();
         }
 
         private void HourAxis_LabelCreated(object sender, LabelCreatedEventArgs e)

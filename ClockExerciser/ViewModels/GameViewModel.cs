@@ -8,12 +8,16 @@ using System.Runtime.CompilerServices;
 using ClockExerciser.Models;
 using ClockExerciser.Services;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Storage;
 
 namespace ClockExerciser.ViewModels;
 
-public sealed class GameViewModel : INotifyPropertyChanged
+public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable
 {
     private readonly LocalizationService _localizationService;
+    private readonly IAudioService _audioService;
+    private readonly DutchTimeParser _dutchTimeParser;
+    private readonly EnglishTimeParser _englishTimeParser;
     private readonly Random _random = new();
     private GameMode _activeMode = GameMode.ClockToTime;
     private TimeSpan _targetTime;
@@ -26,42 +30,53 @@ public sealed class GameViewModel : INotifyPropertyChanged
     private double _userHourValue = 0;
     private double _userMinuteValue = 0;
     private double _userSecondValue = 0;
-    private GameModeOption? _selectedMode;
     private LanguageOption? _selectedLanguage;
+    private IDispatcherTimer? _secondTimer;
+    private int _currentSecond = 0;
+    private int _correctAnswers = 0;
+    private bool _answerChecked = false;
 
-    public GameViewModel(LocalizationService localizationService)
+    public GameViewModel(LocalizationService localizationService, IAudioService audioService, 
+        DutchTimeParser dutchTimeParser, EnglishTimeParser englishTimeParser)
     {
         _localizationService = localizationService;
+        _audioService = audioService;
+        _dutchTimeParser = dutchTimeParser;
+        _englishTimeParser = englishTimeParser;
         _localizationService.CultureChanged += (_, _) => OnCultureChanged();
 
         Languages = new ObservableCollection<LanguageOption>
         {
-            new("LanguageDutch", "nl-NL"),
-            new("LanguageEnglish", "en-US")
+            new("English", "en-US"),
+            new("Nederlands", "nl-NL")
         };
 
-        ModeOptions = new ObservableCollection<GameModeOption>
-        {
-            new(GameMode.ClockToTime, string.Empty),
-            new(GameMode.TimeToClock, string.Empty),
-            new(GameMode.Random, string.Empty)
-        };
-
-        CheckAnswerCommand = new Command(ExecuteCheckAnswer);
-        NextChallengeCommand = new Command(() => GenerateNewChallenge());
+        CheckAnswerCommand = new Command(ExecutePrimaryAction);
 
         UpdateCultureDependentData();
 
+        // Set to English by default (matches LocalizationService default)
         SelectedLanguage = Languages.First();
-        SelectedMode = ModeOptions.First();
-        GenerateNewChallenge();
+        
+        // Load saved score
+        _correctAnswers = Preferences.Get("CorrectAnswers", 0);
+        
+        // Start the second hand timer
+        StartSecondTimer();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public ObservableCollection<LanguageOption> Languages { get; }
 
-    public ObservableCollection<GameModeOption> ModeOptions { get; }
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        if (query.TryGetValue("mode", out var modeObj) && modeObj is GameMode mode)
+        {
+            _activeMode = mode;
+            GenerateNewChallenge();
+        }
+    }
 
     public LanguageOption? SelectedLanguage
     {
@@ -71,18 +86,6 @@ public sealed class GameViewModel : INotifyPropertyChanged
             if (SetProperty(ref _selectedLanguage, value) && value is not null)
             {
                 _localizationService.SetCulture(value.Culture);
-            }
-        }
-    }
-
-    public GameModeOption? SelectedMode
-    {
-        get => _selectedMode;
-        set
-        {
-            if (SetProperty(ref _selectedMode, value))
-            {
-                GenerateNewChallenge();
             }
         }
     }
@@ -134,6 +137,28 @@ public sealed class GameViewModel : INotifyPropertyChanged
     public bool IsClockToTime => _activeMode == GameMode.ClockToTime;
 
     public bool IsTimeToClock => _activeMode == GameMode.TimeToClock;
+    
+    public int CorrectAnswers
+    {
+        get => _correctAnswers;
+        private set
+        {
+            if (SetProperty(ref _correctAnswers, value))
+            {
+                // Persist score
+                Preferences.Set("CorrectAnswers", value);
+                OnPropertyChanged(nameof(ScoreText));
+            }
+        }
+    }
+    
+    public string ScoreText => $"? {CorrectAnswers}";
+    
+    public string PrimaryButtonText => _answerChecked && _resultSuccess 
+        ? _localizationService.GetString("NextChallenge") 
+        : _localizationService.GetString("SubmitAnswer");
+    
+    public bool ShowNextButton => false; // Always hidden - using single button now
 
     public TimeSpan TargetTime
     {
@@ -200,9 +225,11 @@ public sealed class GameViewModel : INotifyPropertyChanged
 
     public double HourPointerValue => IsClockToTime ? GetTargetHourPointer() : UserHourValue;
 
-    public double MinutePointerValue => IsClockToTime ? GetTargetMinutePointer() : UserMinuteValue;
+    public double MinutePointerValue => ConvertToDialValue(IsClockToTime ? GetTargetMinuteValue() : UserMinuteValue);
 
-    public double SecondPointerValue => IsClockToTime ? TargetTime.Seconds : UserSecondValue;
+    public double SecondPointerValue => ConvertToDialValue(_currentSecond);  // Always show ticking second hand
+
+    private static double ConvertToDialValue(double rawValue) => rawValue / 5d;
 
     public string AppTitle => _localizationService.GetString("AppTitle");
     public string LanguageLabel => _localizationService.GetString("LanguageLabel");
@@ -217,8 +244,21 @@ public sealed class GameViewModel : INotifyPropertyChanged
     public string InstructionText => IsClockToTime ? _localizationService.GetString("ClockToTimeInstruction") : _localizationService.GetString("TimeToClockInstruction");
 
     public Command CheckAnswerCommand { get; }
-    public Command NextChallengeCommand { get; }
 
+    private void ExecutePrimaryAction()
+    {
+        if (_answerChecked && _resultSuccess)
+        {
+            // User clicked "Next Challenge" after correct answer
+            GenerateNewChallenge();
+        }
+        else
+        {
+            // User clicked "Check Answer"
+            ExecuteCheckAnswer();
+        }
+    }
+    
     private void ExecuteCheckAnswer()
     {
         if (_activeMode == GameMode.ClockToTime)
@@ -229,17 +269,21 @@ public sealed class GameViewModel : INotifyPropertyChanged
         {
             EvaluateClockAnswer();
         }
+        
+        _answerChecked = true;
+        OnPropertyChanged(nameof(PrimaryButtonText));
     }
 
     public void GenerateNewChallenge()
     {
-        var requestedMode = SelectedMode?.Mode ?? GameMode.ClockToTime;
-        _activeMode = requestedMode == GameMode.Random ? (_random.Next(0, 2) == 0 ? GameMode.ClockToTime : GameMode.TimeToClock) : requestedMode;
+        _activeMode = _activeMode == GameMode.Random ? (_random.Next(0, 2) == 0 ? GameMode.ClockToTime : GameMode.TimeToClock) : _activeMode;
         TargetTime = CreateRandomTime();
         AnswerText = string.Empty;
         ResultVisible = false;
         ResultMessage = string.Empty;
         ResultSuccess = false;
+        _answerChecked = false; // Reset for new challenge
+        
         if (IsTimeToClock)
         {
             ResetUserHands();
@@ -251,6 +295,7 @@ public sealed class GameViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(HourPointerValue));
         OnPropertyChanged(nameof(MinutePointerValue));
         OnPropertyChanged(nameof(SecondPointerValue));
+        OnPropertyChanged(nameof(PrimaryButtonText));
     }
 
     private void EvaluateTextAnswer()
@@ -264,24 +309,79 @@ public sealed class GameViewModel : INotifyPropertyChanged
         }
 
         var success = MatchesTime(userTime, TargetTime);
-        SetResult(success);
+        
+        // Add debug info for incorrect answers
+        if (!success)
+        {
+            var debugInfo = $" (You: {userTime:hh\\:mm}, Target: {TargetTime:hh\\:mm})";
+            SetResult(success, debugInfo);
+        }
+        else
+        {
+            SetResult(success);
+        }
     }
 
     private void EvaluateClockAnswer()
     {
-        var hourDiff = CircularDifference(UserHourValue, GetTargetHourPointer(), 12);
-        var minuteDiff = CircularDifference(UserMinuteValue, GetTargetMinutePointer(), 60);
-        var secondDiff = CircularDifference(UserSecondValue, TargetTime.Seconds, 60);
-
-        var success = hourDiff <= 0.1 && minuteDiff <= 1 && secondDiff <= 5;
-        SetResult(success);
+        // Get integer hour from user slider (0-12)
+        var userHour = (int)UserHourValue;
+        // Get integer hour from target (0-11, then wrap 0 to 12)
+        var targetHour = TargetTime.Hours % 12;
+        if (targetHour == 0) targetHour = 12;
+        
+        // Get integer minute from user slider (0-59)
+        var userMinute = (int)UserMinuteValue;
+        var targetMinute = TargetTime.Minutes;
+        
+        // Hours must match exactly (after normalization)
+        var hoursMatch = userHour == targetHour || 
+                        (userHour == 0 && targetHour == 12) ||
+                        (userHour == 12 && targetHour == 0);
+        
+        // Minutes within 1 minute tolerance
+        var minuteDiff = Math.Abs(userMinute - targetMinute);
+        var minutesMatch = minuteDiff <= 1;
+        
+        var success = hoursMatch && minutesMatch;
+        
+        // Add debug info for incorrect answers
+        if (!success)
+        {
+            var userTime = new TimeSpan(userHour, userMinute, 0);
+            var debugInfo = $" (You: {userTime:hh\\:mm}, Target: {TargetTime:hh\\:mm}, HourMatch: {hoursMatch}, MinMatch: {minutesMatch})";
+            SetResult(success, debugInfo);
+        }
+        else
+        {
+            SetResult(success);
+        }
     }
 
-    private void SetResult(bool success)
+    private void SetResult(bool success, string? debugInfo = null)
     {
         ResultSuccess = success;
-        ResultMessage = success ? _localizationService.GetString("ResultCorrect") : _localizationService.GetString("ResultIncorrect");
+        var baseMessage = success 
+            ? _localizationService.GetString("ResultCorrect") 
+            : _localizationService.GetString("ResultIncorrect");
+        
+        // Append debug info for incorrect answers in debug builds
+        #if DEBUG
+        ResultMessage = baseMessage + (debugInfo ?? string.Empty);
+        #else
+        ResultMessage = baseMessage;
+        #endif
+        
         ResultVisible = true;
+
+        // Increment score on correct answer
+        if (success)
+        {
+            CorrectAnswers++;
+        }
+
+        // Play audio feedback
+        _ = success ? _audioService.PlaySuccessSound() : _audioService.PlayErrorSound();
     }
 
     private void ResetUserHands()
@@ -297,25 +397,10 @@ public sealed class GameViewModel : INotifyPropertyChanged
         PromptText = FormatFriendlyTime(TargetTime, _localizationService.CurrentCulture);
     }
 
-    private void EvaluateCultureLists()
-    {
-        foreach (var language in Languages)
-        {
-            language.UpdateDisplay(_localizationService.GetString);
-        }
-
-        foreach (var option in ModeOptions)
-        {
-            option.UpdateLabel(_localizationService.GetString);
-        }
-    }
-
     private void UpdateCultureDependentData()
     {
-        EvaluateCultureLists();
         OnPropertyChanged(nameof(AppTitle));
         OnPropertyChanged(nameof(LanguageLabel));
-        OnPropertyChanged(nameof(ModeLabel));
         OnPropertyChanged(nameof(EntryPlaceholder));
         OnPropertyChanged(nameof(SubmitText));
         OnPropertyChanged(nameof(NextText));
@@ -335,9 +420,8 @@ public sealed class GameViewModel : INotifyPropertyChanged
     private TimeSpan CreateRandomTime()
     {
         var hour = _random.Next(0, 24);
-        var minute = _random.Next(0, 12) * 5;
-        var second = _random.Next(0, 12) * 5;
-        return new TimeSpan(hour, minute, second);
+        var minute = _random.Next(0, 12) * 5;  // 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55
+        return new TimeSpan(hour, minute, 0);  // Seconds always 0
     }
 
     private bool TryParseUserTime(out TimeSpan time)
@@ -349,6 +433,7 @@ public sealed class GameViewModel : INotifyPropertyChanged
             return false;
         }
 
+        // Try digital formats first (HH:mm, H:mm, h:mm)
         var formats = new[] { "h\\:mm", "hh\\:mm", "H\\:mm", "HH\\:mm" };
         foreach (var format in formats)
         {
@@ -358,16 +443,42 @@ public sealed class GameViewModel : INotifyPropertyChanged
             }
         }
 
+        // Try natural language based on current culture
+        var isDutch = _localizationService.CurrentCulture.TwoLetterISOLanguageName.Equals("nl", StringComparison.OrdinalIgnoreCase);
+        
+        var parsedTime = isDutch 
+            ? _dutchTimeParser.Parse(input)
+            : _englishTimeParser.Parse(input);
+
+        if (parsedTime.HasValue)
+        {
+            time = parsedTime.Value;
+            return true;
+        }
+
         time = default;
         return false;
     }
 
     private static bool MatchesTime(TimeSpan candidate, TimeSpan target)
     {
-        var diff = Math.Abs((candidate - target).TotalMinutes);
-        var diffPlus = Math.Abs((candidate - target.Add(TimeSpan.FromHours(12))).TotalMinutes);
-        var diffMinus = Math.Abs((candidate - target.Add(TimeSpan.FromHours(-12))).TotalMinutes);
-        return diff <= 1 || diffPlus <= 1 || diffMinus <= 1;
+        // Normalize both times to 12-hour format using (hours % 12) + 12
+        // This keeps values in 12-24 range, avoiding confusing 0 values
+        // Examples: 0 ? 12, 1 ? 13, 5 ? 17, 12 ? 12, 13 ? 13, 17 ? 17
+        var candidateHours = (candidate.Hours % 12) + 12;
+        var targetHours = (target.Hours % 12) + 12;
+        
+        var candidateMinutes = candidate.Minutes;
+        var targetMinutes = target.Minutes;
+        
+        // Check if hours match (same hour on 12-hour clock)
+        var hoursMatch = candidateHours == targetHours;
+        
+        // Check if minutes are within 1 minute tolerance
+        var minuteDiff = Math.Abs(candidateMinutes - targetMinutes);
+        var minutesMatch = minuteDiff <= 1;
+        
+        return hoursMatch && minutesMatch;
     }
 
     private static double CircularDifference(double a, double b, double period)
@@ -382,7 +493,7 @@ public sealed class GameViewModel : INotifyPropertyChanged
         return hours + TargetTime.Minutes / 60d + TargetTime.Seconds / 3600d;
     }
 
-    private double GetTargetMinutePointer()
+    private double GetTargetMinuteValue()
     {
         return TargetTime.Minutes + TargetTime.Seconds / 60d;
     }
@@ -481,5 +592,24 @@ public sealed class GameViewModel : INotifyPropertyChanged
         field = value;
         OnPropertyChanged(propertyName);
         return true;
+    }
+
+    private void StartSecondTimer()
+    {
+        // Start with current second
+        _currentSecond = DateTime.Now.Second;
+        
+        // Create a timer that ticks every second
+        _secondTimer = Application.Current?.Dispatcher.CreateTimer();
+        if (_secondTimer != null)
+        {
+            _secondTimer.Interval = TimeSpan.FromSeconds(1);
+            _secondTimer.Tick += (s, e) =>
+            {
+                _currentSecond = (_currentSecond + 1) % 60;
+                OnPropertyChanged(nameof(SecondPointerValue));
+            };
+            _secondTimer.Start();
+        }
     }
 }

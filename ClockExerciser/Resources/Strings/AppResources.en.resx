@@ -105,4 +105,4 @@
   <data name="ClockStatusLabel" xml:space="preserve">
     <value>Active challenge</value>
   </data>
-</root>
+  <data name="MenuTitle" xml:space="preserve">`n    <value>Clock Exerciser</value>`n  </data>`n  <data name="MenuSubtitle" xml:space="preserve">`n    <value>Learn to read the clock!</value>`n  </data>`n</root>

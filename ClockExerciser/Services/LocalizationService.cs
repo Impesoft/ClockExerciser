@@ -7,7 +7,7 @@ namespace ClockExerciser.Services;
 
 public class LocalizationService : INotifyPropertyChanged
 {
-    readonly CultureInfo _defaultCulture = new("nl-NL");
+    readonly CultureInfo _defaultCulture = new("en-US");
     CultureInfo _currentCulture;
 
     public LocalizationService()

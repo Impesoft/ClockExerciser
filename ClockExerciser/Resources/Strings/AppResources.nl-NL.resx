@@ -43,66 +43,62 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AppTitle" xml:space="preserve">
-    <value>Klokken Trainer</value>
+    <value>Clock Trainer</value>
   </data>
-  <data name="LanguageLabel" xml:space="preserve">
-    <value>Taal</value>
+  <data name="LanguageLabel" xml:space="preserve"><value>Taal</value>
   </data>
   <data name="LanguageDutch" xml:space="preserve">
-    <value>Nederlands</value>
+    <value>Dutch</value>
   </data>
   <data name="LanguageEnglish" xml:space="preserve">
-    <value>Engels</value>
+    <value>English</value>
   </data>
   <data name="ModeLabel" xml:space="preserve">
-    <value>Spelmodus</value>
+    <value>Game mode</value>
   </data>
-  <data name="ModeClockToTime" xml:space="preserve">
-    <value>Klok naar tijd</value>
+  <data name="ModeClockToTime" xml:space="preserve"><value>Klok naar tijd</value>
   </data>
-  <data name="ModeTimeToClock" xml:space="preserve">
-    <value>Tijd naar klok</value>
+  <data name="ModeTimeToClock" xml:space="preserve"><value>Tijd naar klok</value>
   </data>
-  <data name="ModeRandom" xml:space="preserve">
-    <value>Willekeurig</value>
+  <data name="ModeRandom" xml:space="preserve"><value>Willekeurig</value>
   </data>
   <data name="ModeRandomDetail" xml:space="preserve">
-    <value>Afwisselend lezen en zetten.</value>
+    <value>Mix both challenges.</value>
   </data>
   <data name="ClockToTimeInstruction" xml:space="preserve">
-    <value>Lees de klok en vul de tijd in (bijv. 15:30).</value>
+    <value>Read the clock and type the matching time (e.g. 15:30).</value>
   </data>
   <data name="TimeToClockInstruction" xml:space="preserve">
-    <value>Zet de wijzers gelijk aan de getoonde tijd.</value>
+    <value>Move the hands to the requested time.</value>
   </data>
   <data name="EntryPlaceholder" xml:space="preserve">
-    <value>Bijv. 15:30</value>
+    <value>Example: 03:45</value>
   </data>
   <data name="SubmitAnswer" xml:space="preserve">
-    <value>Controleer</value>
+    <value>Check</value>
   </data>
   <data name="NextChallenge" xml:space="preserve">
-    <value>Volgende opdracht</value>
+    <value>Next challenge</value>
   </data>
   <data name="ResultCorrect" xml:space="preserve">
-    <value>Goed gedaan!</value>
+    <value>Great job!</value>
   </data>
   <data name="ResultIncorrect" xml:space="preserve">
-    <value>Bijna, probeer opnieuw.</value>
+    <value>Close, try again.</value>
   </data>
   <data name="PromptLabel" xml:space="preserve">
-    <value>Gezochte tijd</value>
+    <value>Requested time</value>
   </data>
   <data name="HourLabel" xml:space="preserve">
-    <value>Uurwijzer</value>
+    <value>Hour hand</value>
   </data>
   <data name="MinuteLabel" xml:space="preserve">
-    <value>Minuutwijzer</value>
+    <value>Minute hand</value>
   </data>
   <data name="SecondLabel" xml:space="preserve">
-    <value>Secondewijzer</value>
+    <value>Second hand</value>
   </data>
   <data name="ClockStatusLabel" xml:space="preserve">
-    <value>Actieve opdracht</value>
+    <value>Active challenge</value>
   </data>
-</root>
+  <data name="MenuTitle" xml:space="preserve"><value>Klokken Trainer</value></data>`n  <data name="MenuSubtitle" xml:space="preserve"><value>Leer de klok lezen!</value></data>`n</root>

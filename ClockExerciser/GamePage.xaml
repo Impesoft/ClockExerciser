@@ -2,28 +2,15 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:sfRadialGauge="clr-namespace:Syncfusion.Maui.Gauges;assembly=Syncfusion.Maui.Gauges"
-             x:Class="ClockExerciser.MainPage"
+             x:Class="ClockExerciser.GamePage"
              Title="{Binding AppTitle}">
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="18">
 
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                <VerticalStackLayout>
-                    <Label Text="{Binding LanguageLabel}" FontAttributes="Bold" />
-                    <Picker ItemsSource="{Binding Languages}"
-                            ItemDisplayBinding="{Binding DisplayName}"
-                            SelectedItem="{Binding SelectedLanguage}" />
-                </VerticalStackLayout>
-                <VerticalStackLayout Grid.Column="1">
-                    <Label Text="{Binding ModeLabel}" FontAttributes="Bold" />
-                    <Picker ItemsSource="{Binding ModeOptions}"
-                            ItemDisplayBinding="{Binding Label}"
-                            SelectedItem="{Binding SelectedMode}" />
-                </VerticalStackLayout>
+            <Grid ColumnDefinitions="*" ColumnSpacing="12">
             </Grid>
 
-            <Label Text="{Binding InstructionText}"
-                   Style="{StaticResource Body}" />
+            <Label Text="{Binding InstructionText}" />
 
             <Border Padding="-20" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}" HorizontalOptions="Center">
                 <Border.StrokeShape>
@@ -95,20 +82,23 @@
                 <Slider Minimum="0"
                         Maximum="59"
                         Value="{Binding UserMinuteValue, Mode=TwoWay}" />
-                <Label Text="{Binding SecondLabel}" FontAttributes="Bold" />
-                <Slider Minimum="0"
-                        Maximum="59"
-                        Value="{Binding UserSecondValue, Mode=TwoWay}" />
             </VerticalStackLayout>
 
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                <Button Text="{Binding SubmitText}"
-                        Command="{Binding CheckAnswerCommand}"
-                        IsEnabled="{Binding CanSubmit}" />
-                <Button Grid.Column="1"
-                        Text="{Binding NextText}"
-                        Command="{Binding NextChallengeCommand}" />
-            </Grid>
+            <!-- Score Display -->
+            <HorizontalStackLayout HorizontalOptions="End" Spacing="8">
+                <Label Text="Score:" FontAttributes="Bold" VerticalOptions="Center"/>
+                <Label Text="{Binding ScoreText}" 
+                       FontSize="20" 
+                       FontAttributes="Bold" 
+                       TextColor="#2e7d32"
+                       VerticalOptions="Center"/>
+            </HorizontalStackLayout>
+
+            <!-- Single Primary Action Button -->
+            <Button Text="{Binding PrimaryButtonText}"
+                    Command="{Binding CheckAnswerCommand}"
+                    IsEnabled="{Binding CanSubmit}"
+                    HorizontalOptions="Fill" />
 
             <Label Text="{Binding ResultMessage}"
                    IsVisible="{Binding ResultVisible}"
@@ -130,3 +120,6 @@
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
+
+
+
