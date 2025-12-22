@@ -162,7 +162,7 @@ This is an educational project. Contributions are welcome!
 
 ## Contact
 
-Created by Ward Beyens
+Created by Ward Impe
 - GitHub: [@Impesoft](https://github.com/Impesoft)
 
 ---
