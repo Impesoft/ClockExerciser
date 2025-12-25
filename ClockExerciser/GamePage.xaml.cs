@@ -19,6 +19,16 @@ namespace ClockExerciser
                 e.Text = "12";
             }
         }
+
+        private void HourSlider_DragCompleted(object sender, EventArgs e)
+        {
+            if (sender is Slider slider)
+            {
+                // Snap to half-hour increments (0.5 steps)
+                double snappedValue = Math.Round(slider.Value * 2) / 2.0;
+                slider.Value = snappedValue;
+            }
+        }
     }
 }
 

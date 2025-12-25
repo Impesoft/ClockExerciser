@@ -75,13 +75,18 @@
 
             <VerticalStackLayout Spacing="8" IsVisible="{Binding IsTimeToClock}">
                 <Label Text="{Binding HourLabel}" FontAttributes="Bold" />
-                <Slider Minimum="0"
+                <Slider Minimum="-12"
                         Maximum="12"
-                        Value="{Binding UserHourValue, Mode=TwoWay}" />
+                        Value="{Binding UserHourValue, Mode=TwoWay}"
+                        MinimumTrackColor="{AppThemeBinding Light=#2196F3, Dark=#64B5F6}"
+                        MaximumTrackColor="{AppThemeBinding Light=#BDBDBD, Dark=#757575}"
+                        DragCompleted="HourSlider_DragCompleted" />
                 <Label Text="{Binding MinuteLabel}" FontAttributes="Bold" />
-                <Slider Minimum="0"
-                        Maximum="59"
-                        Value="{Binding UserMinuteValue, Mode=TwoWay}" />
+                <Slider Minimum="-60"
+                        Maximum="60"
+                        Value="{Binding UserMinuteValue, Mode=TwoWay}"
+                        MinimumTrackColor="{AppThemeBinding Light=#4CAF50, Dark=#81C784}"
+                        MaximumTrackColor="{AppThemeBinding Light=#BDBDBD, Dark=#757575}"/>
             </VerticalStackLayout>
 
             <!-- Score Display -->
@@ -120,6 +125,8 @@
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
+
+
 
 
 

@@ -223,14 +223,42 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable
         }
     }
 
-    public double HourPointerValue => IsClockToTime ? GetTargetHourPointer() : UserHourValue;
+    public double HourPointerValue => IsClockToTime ? GetTargetHourPointer() : ConvertCenteredHourToAbsolute(UserHourValue);
 
-    public double MinutePointerValue => ConvertToDialValue(IsClockToTime ? GetTargetMinuteValue() : UserMinuteValue);
+    public double MinutePointerValue => ConvertToDialValue(IsClockToTime ? GetTargetMinuteValue() : ConvertCenteredMinuteToAbsolute(UserMinuteValue));
 
     public double SecondPointerValue => ConvertToDialValue(_currentSecond);  // Always show ticking second hand
 
     private static double ConvertToDialValue(double rawValue) => rawValue / 5d;
-
+    
+    private static double ConvertCenteredHourToAbsolute(double centeredValue)
+    {
+        // Convert from -12 to +12 range to 0 to 12 range
+        // Left side (negative): goes from 12 down to 1 (12 - abs(value))
+        // Right side (positive): goes from 1 up to 12 (value)
+        // Center (0): represents 12
+        if (centeredValue == 0)
+            return 12;
+        else if (centeredValue < 0)
+            return 12 - Math.Abs(centeredValue); // Left: 12, 11, 10, ..., 1
+        else
+            return centeredValue; // Right: 1, 2, 3, ..., 12
+    }
+    
+    private static double ConvertCenteredMinuteToAbsolute(double centeredValue)
+    {
+        // Convert from -60 to +60 range to 0 to 59 range
+        // Left side (negative): goes from 60 down to 1 (60 - abs(value))
+        // Right side (positive): goes from 1 up to 60 (value)
+        // Center (0): represents 0
+        if (centeredValue == 0)
+            return 0;
+        else if (centeredValue < 0)
+            return 60 - Math.Abs(centeredValue); // Left: 60, 59, 58, ..., 1
+        else
+            return Math.Min(centeredValue, 59); // Right: 1, 2, 3, ..., 59
+    }
+    
     public string AppTitle => _localizationService.GetString("AppTitle");
     public string LanguageLabel => _localizationService.GetString("LanguageLabel");
     public string ModeLabel => _localizationService.GetString("ModeLabel");
@@ -324,14 +352,18 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable
 
     private void EvaluateClockAnswer()
     {
-        // Get integer hour from user slider (0-12)
-        var userHour = (int)UserHourValue;
+        // Convert centered slider values to absolute clock values
+        var userHourAbsolute = ConvertCenteredHourToAbsolute(UserHourValue);
+        var userMinuteAbsolute = ConvertCenteredMinuteToAbsolute(UserMinuteValue);
+        
+        // Get integer hour from user (0-12)
+        var userHour = (int)userHourAbsolute;
         // Get integer hour from target (0-11, then wrap 0 to 12)
         var targetHour = TargetTime.Hours % 12;
         if (targetHour == 0) targetHour = 12;
         
-        // Get integer minute from user slider (0-59)
-        var userMinute = (int)UserMinuteValue;
+        // Get integer minute from user (0-59)
+        var userMinute = (int)userMinuteAbsolute;
         var targetMinute = TargetTime.Minutes;
         
         // Hours must match exactly (after normalization)
