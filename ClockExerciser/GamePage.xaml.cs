@@ -6,10 +6,23 @@ namespace ClockExerciser
 {
     public partial class GamePage : ContentPage
     {
+        private GameViewModel? _viewModel;
+        
         public GamePage()
         {
             InitializeComponent();
-            BindingContext = ServiceHelper.GetRequiredService<GameViewModel>();
+            _viewModel = ServiceHelper.GetRequiredService<GameViewModel>();
+            BindingContext = _viewModel;
+        }
+        
+        protected override void OnNavigatedFrom(NavigatedFromEventArgs args)
+        {
+            base.OnNavigatedFrom(args);
+            
+            // Dispose the ViewModel to stop the timer when truly navigating away
+            // This prevents timer ticks on a disposed view
+            _viewModel?.Dispose();
+            _viewModel = null;
         }
 
         private void HourAxis_LabelCreated(object sender, LabelCreatedEventArgs e)

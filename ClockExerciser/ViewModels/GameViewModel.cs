@@ -12,7 +12,7 @@ using Microsoft.Maui.Storage;
 
 namespace ClockExerciser.ViewModels;
 
-public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable
+public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, IDisposable
 {
     private readonly LocalizationService _localizationService;
     private readonly IAudioService _audioService;
@@ -642,6 +642,15 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable
                 OnPropertyChanged(nameof(SecondPointerValue));
             };
             _secondTimer.Start();
+        }
+    }
+    
+    public void Dispose()
+    {
+        if (_secondTimer != null)
+        {
+            _secondTimer.Stop();
+            _secondTimer = null;
         }
     }
 }
