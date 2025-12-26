@@ -2,17 +2,21 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using ClockExerciser.Resources.Strings;
+using Microsoft.Maui.Storage;
 
 namespace ClockExerciser.Services;
 
 public class LocalizationService : INotifyPropertyChanged
 {
+    const string PreferenceKey = "SelectedCulture";
     readonly CultureInfo _defaultCulture = new("en-US");
     CultureInfo _currentCulture;
 
     public LocalizationService()
     {
-        _currentCulture = _defaultCulture;
+        // Load saved culture or use default
+        var savedCulture = Preferences.Get(PreferenceKey, _defaultCulture.Name);
+        _currentCulture = new CultureInfo(savedCulture);
         ApplyCulture(_currentCulture);
     }
 
@@ -30,6 +34,10 @@ public class LocalizationService : INotifyPropertyChanged
 
         _currentCulture = culture;
         ApplyCulture(culture);
+        
+        // Persist the selected culture
+        Preferences.Set(PreferenceKey, culture.Name);
+        
         CultureChanged?.Invoke(this, culture);
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentCulture)));
     }

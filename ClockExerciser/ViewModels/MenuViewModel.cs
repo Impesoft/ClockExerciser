@@ -28,7 +28,10 @@ public sealed class MenuViewModel : INotifyPropertyChanged
         RandomModeCommand = new Command(async () => await NavigateToGame(GameMode.Random));
 
         UpdateCultureDependentData();
-        SelectedLanguage = Languages.First(); // English by default
+        
+        // Set selected language to match current culture from service
+        SelectedLanguage = Languages.FirstOrDefault(l => l.Culture.Name == _localizationService.CurrentCulture.Name) 
+                          ?? Languages.First();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

@@ -34,7 +34,6 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     private IDispatcherTimer? _secondTimer;
     private int _currentSecond = 0;
     private int _correctAnswers = 0;
-    private bool _answerChecked = false;
 
     public GameViewModel(LocalizationService localizationService, IAudioService audioService, 
         DutchTimeParser dutchTimeParser, EnglishTimeParser englishTimeParser)
@@ -55,8 +54,9 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
 
         UpdateCultureDependentData();
 
-        // Set to English by default (matches LocalizationService default)
-        SelectedLanguage = Languages.First();
+        // Set selected language to match current culture from service
+        SelectedLanguage = Languages.FirstOrDefault(l => l.Culture.Name == _localizationService.CurrentCulture.Name) 
+                          ?? Languages.First();
         
         // Load saved score
         _correctAnswers = Preferences.Get("CorrectAnswers", 0);
@@ -152,11 +152,9 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
         }
     }
     
-    public string ScoreText => $"? {CorrectAnswers}";
+    public string ScoreText => $"?? {CorrectAnswers}";
     
-    public string PrimaryButtonText => _answerChecked && _resultSuccess 
-        ? _localizationService.GetString("NextChallenge") 
-        : _localizationService.GetString("SubmitAnswer");
+    public string PrimaryButtonText => _localizationService.GetString("SubmitAnswer");
     
     public bool ShowNextButton => false; // Always hidden - using single button now
 
@@ -269,22 +267,15 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     public string HourLabel => _localizationService.GetString("HourLabel");
     public string MinuteLabel => _localizationService.GetString("MinuteLabel");
     public string SecondLabel => _localizationService.GetString("SecondLabel");
+    public string ScoreLabel => _localizationService.GetString("ScoreLabel");
     public string InstructionText => IsClockToTime ? _localizationService.GetString("ClockToTimeInstruction") : _localizationService.GetString("TimeToClockInstruction");
 
     public Command CheckAnswerCommand { get; }
 
     private void ExecutePrimaryAction()
     {
-        if (_answerChecked && _resultSuccess)
-        {
-            // User clicked "Next Challenge" after correct answer
-            GenerateNewChallenge();
-        }
-        else
-        {
-            // User clicked "Check Answer"
-            ExecuteCheckAnswer();
-        }
+        // User clicked "Check Answer" (button no longer changes to "Next Challenge")
+        ExecuteCheckAnswer();
     }
     
     private void ExecuteCheckAnswer()
@@ -298,8 +289,15 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
             EvaluateClockAnswer();
         }
         
-        _answerChecked = true;
-        OnPropertyChanged(nameof(PrimaryButtonText));
+        // If answer was correct, automatically proceed to next challenge after a brief delay
+        if (_resultSuccess)
+        {
+            // Show success message briefly, then auto-advance
+            Task.Delay(1500).ContinueWith(_ => 
+            {
+                Application.Current?.Dispatcher.Dispatch(() => GenerateNewChallenge());
+            });
+        }
     }
 
     public void GenerateNewChallenge()
@@ -310,7 +308,6 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
         ResultVisible = false;
         ResultMessage = string.Empty;
         ResultSuccess = false;
-        _answerChecked = false; // Reset for new challenge
         
         if (IsTimeToClock)
         {
@@ -323,7 +320,6 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
         OnPropertyChanged(nameof(HourPointerValue));
         OnPropertyChanged(nameof(MinutePointerValue));
         OnPropertyChanged(nameof(SecondPointerValue));
-        OnPropertyChanged(nameof(PrimaryButtonText));
     }
 
     private void EvaluateTextAnswer()
@@ -440,6 +436,7 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
         OnPropertyChanged(nameof(HourLabel));
         OnPropertyChanged(nameof(MinuteLabel));
         OnPropertyChanged(nameof(SecondLabel));
+        OnPropertyChanged(nameof(ScoreLabel));
         OnPropertyChanged(nameof(InstructionText));
     }
 

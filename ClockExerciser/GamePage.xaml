@@ -99,7 +99,7 @@
 
             <!-- Score Display -->
             <HorizontalStackLayout HorizontalOptions="End" Spacing="8">
-                <Label Text="Score:" FontAttributes="Bold" VerticalOptions="Center"/>
+                <Label Text="{Binding ScoreLabel}" FontAttributes="Bold" VerticalOptions="Center"/>
                 <Label Text="{Binding ScoreText}" 
                        FontSize="20" 
                        FontAttributes="Bold" 
@@ -133,12 +133,3 @@
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
-
-
-
-
-
-
-
-
-
