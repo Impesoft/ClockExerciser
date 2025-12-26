@@ -607,7 +607,7 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     {
         string HourWord(int value) => value switch
         {
-            1 => "een",
+            1 => "één",
             2 => "twee",
             3 => "drie",
             4 => "vier",

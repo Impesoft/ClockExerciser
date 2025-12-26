@@ -21,8 +21,8 @@
             </VerticalStackLayout>
 
             <!-- Animated Clock -->
-            <Border HeightRequest="180" 
-                    WidthRequest="180"
+            <Border HeightRequest="160" 
+                    WidthRequest="160"
                     HorizontalOptions="Center"
                     BackgroundColor="{AppThemeBinding Light=#e3f2fd, Dark=#1e3a5f}"
                     StrokeThickness="2"
