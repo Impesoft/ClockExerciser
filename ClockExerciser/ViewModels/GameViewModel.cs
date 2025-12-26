@@ -34,6 +34,8 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     private IDispatcherTimer? _secondTimer;
     private int _currentSecond = 0;
     private int _correctAnswers = 0;
+    private int _wrongAnswers = 0;
+    private const int MaxWrongAnswers = 3;
 
     public GameViewModel(LocalizationService localizationService, IAudioService audioService, 
         DutchTimeParser dutchTimeParser, EnglishTimeParser englishTimeParser)
@@ -51,15 +53,13 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
         };
 
         CheckAnswerCommand = new Command(ExecutePrimaryAction);
+        NewGameCommand = new Command(StartNewGame);
 
         UpdateCultureDependentData();
 
         // Set selected language to match current culture from service
         SelectedLanguage = Languages.FirstOrDefault(l => l.Culture.Name == _localizationService.CurrentCulture.Name) 
                           ?? Languages.First();
-        
-        // Load saved score
-        _correctAnswers = Preferences.Get("CorrectAnswers", 0);
         
         // Start the second hand timer
         StartSecondTimer();
@@ -74,7 +74,7 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
         if (query.TryGetValue("mode", out var modeObj) && modeObj is GameMode mode)
         {
             _activeMode = mode;
-            GenerateNewChallenge();
+            StartNewGame();
         }
     }
 
@@ -141,18 +141,32 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     public int CorrectAnswers
     {
         get => _correctAnswers;
+        private set => SetProperty(ref _correctAnswers, value);
+    }
+    
+    public int WrongAnswers
+    {
+        get => _wrongAnswers;
         private set
         {
-            if (SetProperty(ref _correctAnswers, value))
+            if (SetProperty(ref _wrongAnswers, value))
             {
-                // Persist score
-                Preferences.Set("CorrectAnswers", value);
-                OnPropertyChanged(nameof(ScoreText));
+                OnPropertyChanged(nameof(IsGameOver));
             }
         }
     }
     
-    public string ScoreText => $"?? {CorrectAnswers}";
+    public int HighScore
+    {
+        get => Preferences.Get("HighScore", 0);
+        private set
+        {
+            Preferences.Set("HighScore", value);
+            OnPropertyChanged();
+        }
+    }
+    
+    public bool IsGameOver => _wrongAnswers >= MaxWrongAnswers;
     
     public string PrimaryButtonText => _localizationService.GetString("SubmitAnswer");
     
@@ -267,14 +281,21 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     public string HourLabel => _localizationService.GetString("HourLabel");
     public string MinuteLabel => _localizationService.GetString("MinuteLabel");
     public string SecondLabel => _localizationService.GetString("SecondLabel");
-    public string ScoreLabel => _localizationService.GetString("ScoreLabel");
+    public string NewGameButtonText => _localizationService.GetString("NewGame");
     public string InstructionText => IsClockToTime ? _localizationService.GetString("ClockToTimeInstruction") : _localizationService.GetString("TimeToClockInstruction");
 
     public Command CheckAnswerCommand { get; }
+    public Command NewGameCommand { get; }
 
     private void ExecutePrimaryAction()
     {
-        // User clicked "Check Answer" (button no longer changes to "Next Challenge")
+        // Don't allow checking answer if game is over
+        if (IsGameOver)
+        {
+            return;
+        }
+        
+        // User clicked "Check Answer"
         ExecuteCheckAnswer();
     }
     
@@ -298,10 +319,30 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
                 Application.Current?.Dispatcher.Dispatch(() => GenerateNewChallenge());
             });
         }
+        // If game is over after wrong answer, don't auto-advance
+    }
+    
+    private void StartNewGame()
+    {
+        // Reset game state
+        CorrectAnswers = 0;
+        WrongAnswers = 0;
+        ResultVisible = false;
+        ResultMessage = string.Empty;
+        ResultSuccess = false;
+        
+        // Generate first challenge
+        GenerateNewChallenge();
     }
 
     public void GenerateNewChallenge()
     {
+        // Don't generate new challenge if game is over
+        if (IsGameOver)
+        {
+            return;
+        }
+        
         _activeMode = _activeMode == GameMode.Random ? (_random.Next(0, 2) == 0 ? GameMode.ClockToTime : GameMode.TimeToClock) : _activeMode;
         TargetTime = CreateRandomTime();
         AnswerText = string.Empty;
@@ -402,10 +443,26 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
         
         ResultVisible = true;
 
-        // Increment score on correct answer
+        // Update score based on result
         if (success)
         {
             CorrectAnswers++;
+            
+            // Update high score if current score is higher
+            if (CorrectAnswers > HighScore)
+            {
+                HighScore = CorrectAnswers;
+            }
+        }
+        else
+        {
+            WrongAnswers++;
+            
+            // Check if game is over
+            if (IsGameOver)
+            {
+                ResultMessage = string.Format(_localizationService.GetString("GameOver"), CorrectAnswers);
+            }
         }
 
         // Play audio feedback
@@ -436,7 +493,7 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
         OnPropertyChanged(nameof(HourLabel));
         OnPropertyChanged(nameof(MinuteLabel));
         OnPropertyChanged(nameof(SecondLabel));
-        OnPropertyChanged(nameof(ScoreLabel));
+        OnPropertyChanged(nameof(NewGameButtonText));
         OnPropertyChanged(nameof(InstructionText));
     }
 

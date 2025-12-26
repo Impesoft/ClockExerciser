@@ -189,4 +189,13 @@
   <data name="ScoreLabel" xml:space="preserve">
     <value>Score:</value>
   </data>
+  <data name="GameOver" xml:space="preserve">
+    <value>Game Over! Jouw score: {0}. Opnieuw proberen?</value>
+  </data>
+  <data name="NewGame" xml:space="preserve">
+    <value>Nieuw Spel</value>
+  </data>
+  <data name="HighScoreLabel" xml:space="preserve">
+    <value>Hoogste Score:</value>
+  </data>
 </root>

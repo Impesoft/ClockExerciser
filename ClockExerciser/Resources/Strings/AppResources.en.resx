@@ -186,5 +186,16 @@
   <data name="MenuSubtitle" xml:space="preserve">
     <value>Learn to tell the time!</value>
   </data>
-  <data name="ScoreLabel" xml:space="preserve"><value>Score:</value></data>
+  <data name="ScoreLabel" xml:space="preserve">
+    <value>Score:</value>
+  </data>
+  <data name="GameOver" xml:space="preserve">
+    <value>Game Over! Your score: {0}. Try again?</value>
+  </data>
+  <data name="NewGame" xml:space="preserve">
+    <value>New Game</value>
+  </data>
+  <data name="HighScoreLabel" xml:space="preserve">
+    <value>High Score:</value>
+  </data>
 </root>
