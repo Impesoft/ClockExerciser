@@ -36,11 +36,15 @@
                                                              NeedleEndWidth="1"
                                                              KnobSizeUnit="Factor"
                                                              KnobRadius="0.05"
-                                                             NeedleFill="#d84315">
-                                    <sfRadialGauge:NeedlePointer.Shadow>
-                                        <Shadow Brush="Black" Opacity="0.3" Radius="4" Offset="2,2" />
-                                    </sfRadialGauge:NeedlePointer.Shadow>
-                                </sfRadialGauge:NeedlePointer>
+                                                             NeedleFill="#d84315" />
+                                <sfRadialGauge:NeedlePointer Value="{Binding MinutePointerValue}"
+                                                             NeedleLengthUnit="Factor"
+                                                             NeedleLength="0.90"
+                                                             NeedleStartWidth="5"
+                                                             NeedleEndWidth="5"
+                                                             KnobSizeUnit="Factor"
+                                                             KnobRadius="0.08"
+                                                             NeedleFill="{AppThemeBinding Light=#002200, Dark=#002200}" />
                                 <sfRadialGauge:NeedlePointer Value="{Binding MinutePointerValue}"
                                                              NeedleLengthUnit="Factor"
                                                              NeedleLength="0.90"
@@ -48,11 +52,7 @@
                                                              NeedleEndWidth="4"
                                                              KnobSizeUnit="Factor"
                                                              KnobRadius="0.08"
-                                                             NeedleFill="{AppThemeBinding Light=#4CAF50, Dark=#81C784}">
-                                    <sfRadialGauge:NeedlePointer.Shadow>
-                                        <Shadow Brush="Black" Opacity="0.4" Radius="5" Offset="2,2" />
-                                    </sfRadialGauge:NeedlePointer.Shadow>
-                                </sfRadialGauge:NeedlePointer>
+                                                             NeedleFill="{AppThemeBinding Light=#4CAF50, Dark=#81C784}" />
                                 <sfRadialGauge:NeedlePointer Value="{Binding HourPointerValue}"
                                                              NeedleLengthUnit="Factor"
                                                              NeedleLength="0.60"
@@ -62,11 +62,7 @@
                                                              KnobRadius="0.08"
                                                              TailLength="0.05"
                                                              TailLengthUnit="Factor"
-                                                             NeedleFill="{AppThemeBinding Light=#2196F3, Dark=#64B5F6}">
-                                    <sfRadialGauge:NeedlePointer.Shadow>
-                                        <Shadow Brush="Black" Opacity="0.5" Radius="6" Offset="2,2" />
-                                    </sfRadialGauge:NeedlePointer.Shadow>
-                                </sfRadialGauge:NeedlePointer>
+                                                             NeedleFill="{AppThemeBinding Light=#2196F3, Dark=#64B5F6}" />
                             </sfRadialGauge:RadialAxis.Pointers>
                         </sfRadialGauge:RadialAxis>
                     </sfRadialGauge:SfRadialGauge.Axes>

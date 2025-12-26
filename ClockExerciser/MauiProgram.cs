@@ -27,9 +27,27 @@ namespace ClockExerciser
 
                 var builder = MauiApp.CreateBuilder();
 
-                builder.Configuration
-                    .AddJsonFile("secrets.json", optional: true, reloadOnChange: false)
-                    .AddEnvironmentVariables(prefix: "CLOCKEXERCISER_");
+                // Load secrets.json from Raw assets using FileSystem.OpenAppPackageFileAsync
+                Log("📄 Loading secrets.json from app package...");
+                try
+                {
+                    using var stream = FileSystem.OpenAppPackageFileAsync("secrets.json").Result;
+                    if (stream != null)
+                    {
+                        builder.Configuration.AddJsonStream(stream);
+                        Log("✅ secrets.json loaded successfully");
+                    }
+                    else
+                    {
+                        Log("⚠️ WARNING: secrets.json not found in app package");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log($"⚠️ WARNING: Failed to load secrets.json: {ex.Message}");
+                }
+
+                builder.Configuration.AddEnvironmentVariables(prefix: "CLOCKEXERCISER_");
 
                 Log("📝 Registering Syncfusion license...");
                 try
@@ -40,7 +58,7 @@ namespace ClockExerciser
 
                     if (string.IsNullOrWhiteSpace(licenseKey))
                     {
-                        Log("⚠️ WARNING: Syncfusion license key not configured. Add it to `ClockExerciser/secrets.json` (Syncfusion:LicenseKey) or set env var `SYNCFUSION_LICENSE_KEY`.");
+                        Log("⚠️ WARNING: Syncfusion license key not configured. Add it to `ClockExerciser/Resources/Raw/secrets.json` (Syncfusion:LicenseKey) or set env var `SYNCFUSION_LICENSE_KEY`.");
                     }
                     else
                     {
