@@ -34,6 +34,7 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     private LanguageOption? _selectedLanguage;
     private IDispatcherTimer? _secondTimer;
     private int _currentSecond = 0;
+    private bool _isCheckingAnswer = false; // Prevents rapid-fire submissions
 
     public GameViewModel(LocalizationService localizationService, IAudioService audioService, 
         DutchTimeParser dutchTimeParser, EnglishTimeParser englishTimeParser, IGameStateService gameStateService)
@@ -147,7 +148,7 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
         private set => SetProperty(ref _resultSuccess, value);
     }
 
-    public bool CanSubmit => IsClockToTime ? !string.IsNullOrWhiteSpace(AnswerText) : true;
+    public bool CanSubmit => !_isCheckingAnswer && (IsClockToTime ? !string.IsNullOrWhiteSpace(AnswerText) : true);
 
     public bool IsClockToTime => _gameStateService.ActiveMode == GameMode.ClockToTime;
 
@@ -291,11 +292,15 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
 
     private void ExecutePrimaryAction()
     {
-        // Don't allow checking answer if game is over
-        if (IsGameOver)
+        // Don't allow checking answer if game is over or already checking
+        if (IsGameOver || _isCheckingAnswer)
         {
             return;
         }
+        
+        // Disable button immediately to prevent rapid-fire submissions
+        _isCheckingAnswer = true;
+        OnPropertyChanged(nameof(CanSubmit));
         
         // User clicked "Check Answer"
         ExecuteCheckAnswer();
@@ -303,6 +308,9 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     
     private void ExecuteCheckAnswer()
     {
+        if (_isCheckingAnswer) return; // Ignore if already checking answer
+        _isCheckingAnswer = true; // Set flag to ignore further clicks
+        
         if (_gameStateService.ActiveMode == GameMode.ClockToTime)
         {
             EvaluateTextAnswer();
@@ -322,6 +330,9 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
             });
         }
         // If game is over after wrong answer, don't auto-advance
+
+        // Clear flag after a short delay to allow next click
+        Task.Delay(500).ContinueWith(_ => _isCheckingAnswer = false);
     }
     
     private void StartNewGame()
@@ -373,6 +384,9 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
         ResultVisible = false;
         ResultMessage = string.Empty;
         ResultSuccess = false;
+        
+        // Re-enable the check button for the new challenge
+        _isCheckingAnswer = false;
         
         if (IsTimeToClock)
         {
