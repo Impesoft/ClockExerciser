@@ -198,4 +198,16 @@
   <data name="HighScoreLabel" xml:space="preserve">
     <value>High Score:</value>
   </data>
+  <data name="DifficultyLabel" xml:space="preserve">
+    <value>Difficulty</value>
+  </data>
+  <data name="DifficultyBeginner" xml:space="preserve">
+    <value>Beginner</value>
+  </data>
+  <data name="DifficultyNormal" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="DifficultyAdvanced" xml:space="preserve">
+    <value>Advanced</value>
+  </data>
 </root>

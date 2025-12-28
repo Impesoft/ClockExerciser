@@ -103,16 +103,28 @@
             </VerticalStackLayout>
 
             <!-- Language Selection -->
-            <VerticalStackLayout Spacing="8">
+            <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
                 <Label Text="{Binding LanguageLabel}" 
                        FontAttributes="Bold"
-                       HorizontalTextAlignment="Center" />
+                       VerticalOptions="Center" />
                 <Picker ItemsSource="{Binding Languages}"
                         ItemDisplayBinding="{Binding DisplayName}"
                         SelectedItem="{Binding SelectedLanguage}"
-                        HorizontalOptions="Center"
-                        WidthRequest="200" />
-            </VerticalStackLayout>
+                        WidthRequest="200"
+                        VerticalOptions="Center" />
+            </HorizontalStackLayout>
+
+            <!-- Difficulty Selection -->
+            <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
+                <Label Text="{Binding DifficultyLabel}" 
+                       FontAttributes="Bold"
+                       VerticalOptions="Center" />
+                <Picker ItemsSource="{Binding Difficulties}"
+                        ItemDisplayBinding="{Binding DisplayName}"
+                        SelectedItem="{Binding SelectedDifficulty}"
+                        WidthRequest="200"
+                        VerticalOptions="Center" />
+            </HorizontalStackLayout>
 
         </VerticalStackLayout>
     </ScrollView>

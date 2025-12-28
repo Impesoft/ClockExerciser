@@ -9,10 +9,10 @@ namespace ClockExerciser.Services;
 /// </summary>
 public sealed class GameStateService : IGameStateService
 {
-    private const int DefaultMaxWrongAnswers = 3;
     private int _correctAnswers;
     private int _wrongAnswers;
     private GameMode _activeMode = GameMode.ClockToTime;
+    private DifficultyLevel _currentDifficulty = DifficultyLevel.Normal;
 
     public event EventHandler? GameStateChanged;
 
@@ -25,10 +25,10 @@ public sealed class GameStateService : IGameStateService
             {
                 _correctAnswers = value;
                 
-                // Update high score if current score is higher
-                if (_correctAnswers > HighScore)
+                // Update high score if current effective score is higher
+                if (EffectiveScore > HighScore)
                 {
-                    HighScore = _correctAnswers;
+                    HighScore = EffectiveScore;
                 }
                 
                 OnGameStateChanged();
@@ -62,6 +62,19 @@ public sealed class GameStateService : IGameStateService
         }
     }
 
+    public DifficultyLevel CurrentDifficulty
+    {
+        get => _currentDifficulty;
+        set
+        {
+            if (_currentDifficulty != value)
+            {
+                _currentDifficulty = value;
+                OnGameStateChanged();
+            }
+        }
+    }
+
     public int HighScore
     {
         get => Preferences.Get("HighScore", 0);
@@ -72,9 +85,19 @@ public sealed class GameStateService : IGameStateService
         }
     }
 
-    public int MaxWrongAnswers => DefaultMaxWrongAnswers;
+    public int MaxWrongAnswers => CurrentDifficulty switch
+    {
+        DifficultyLevel.Beginner => int.MaxValue, // Unlimited
+        DifficultyLevel.Normal => 5,
+        DifficultyLevel.Advanced => 3,
+        _ => 3
+    };
 
-    public bool IsGameOver => _wrongAnswers >= MaxWrongAnswers;
+    public bool IsGameOver => CurrentDifficulty != DifficultyLevel.Beginner && _wrongAnswers >= MaxWrongAnswers;
+
+    public int EffectiveScore => CurrentDifficulty == DifficultyLevel.Beginner 
+        ? Math.Max(0, _correctAnswers - _wrongAnswers) // Subtract wrong answers for Beginner
+        : _correctAnswers; // Normal and Advanced don't penalize in score
 
     public void ResetGame()
     {

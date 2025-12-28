@@ -129,24 +129,25 @@
 
             <!-- Score Display -->
             <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,8,0,0">
-                <!-- Current Score -->
+                <!-- Current Score (shows effective score for Beginner) -->
                 <Label Grid.Column="0" FontSize="20" FontAttributes="Bold" VerticalOptions="Center">
                     <Label.FormattedText>
                         <FormattedString>
                             <Span Text="🏆 " FontFamily="{OnPlatform WinUI='Segoe UI Emoji'}" />
-                            <Span Text="{Binding CorrectAnswers}" TextColor="#2e7d32" />
+                            <Span Text="{Binding EffectiveScore}" TextColor="#2e7d32" />
                         </FormattedString>
                     </Label.FormattedText>
                 </Label>
                 
-                <!-- Wrong Answers -->
-                <Label Grid.Column="1" FontSize="18" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center">
+                <!-- Wrong Answers (hidden for Beginner mode) -->
+                <Label Grid.Column="1" FontSize="18" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center"
+                       IsVisible="{Binding IsBeginnerMode, Converter={StaticResource InvertedBoolConverter}}">
                     <Label.FormattedText>
                         <FormattedString>
                             <Span Text="❌ " FontFamily="{OnPlatform WinUI='Segoe UI Emoji'}" />
                             <Span Text="{Binding WrongAnswers}" TextColor="#c62828" />
                             <Span Text="/" TextColor="#c62828" />
-                            <Span Text="3" TextColor="#c62828" />
+                            <Span Text="{Binding MaxWrongAnswers}" TextColor="#c62828" />
                         </FormattedString>
                     </Label.FormattedText>
                 </Label>

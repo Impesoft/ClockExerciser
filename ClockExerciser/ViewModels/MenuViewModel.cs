@@ -10,11 +10,14 @@ namespace ClockExerciser.ViewModels;
 public sealed class MenuViewModel : INotifyPropertyChanged
 {
     private readonly LocalizationService _localizationService;
+    private readonly IGameStateService _gameStateService;
     private LanguageOption? _selectedLanguage;
+    private DifficultyOption? _selectedDifficulty;
 
-    public MenuViewModel(LocalizationService localizationService)
+    public MenuViewModel(LocalizationService localizationService, IGameStateService gameStateService)
     {
         _localizationService = localizationService;
+        _gameStateService = gameStateService;
         _localizationService.CultureChanged += (_, _) => OnCultureChanged();
 
         Languages = new ObservableCollection<LanguageOption>
@@ -22,6 +25,10 @@ public sealed class MenuViewModel : INotifyPropertyChanged
             new("English", "en-US"),
             new("Nederlands", "nl-NL")
         };
+
+        // Initialize difficulties - will be populated with localized names on culture change
+        Difficulties = new ObservableCollection<DifficultyOption>();
+        UpdateDifficulties();
 
         ClockToTimeCommand = new Command(async () => await NavigateToGame(GameMode.ClockToTime));
         TimeToClockCommand = new Command(async () => await NavigateToGame(GameMode.TimeToClock));
@@ -32,11 +39,16 @@ public sealed class MenuViewModel : INotifyPropertyChanged
         // Set selected language to match current culture from service
         SelectedLanguage = Languages.FirstOrDefault(l => l.Culture.Name == _localizationService.CurrentCulture.Name) 
                           ?? Languages.First();
+        
+        // Set selected difficulty to match current difficulty from service
+        SelectedDifficulty = Difficulties.FirstOrDefault(d => d.Level == _gameStateService.CurrentDifficulty)
+                          ?? Difficulties.First();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public ObservableCollection<LanguageOption> Languages { get; }
+    public ObservableCollection<DifficultyOption> Difficulties { get; }
 
     public LanguageOption? SelectedLanguage
     {
@@ -46,6 +58,18 @@ public sealed class MenuViewModel : INotifyPropertyChanged
             if (SetProperty(ref _selectedLanguage, value) && value is not null)
             {
                 _localizationService.SetCulture(value.Culture);
+            }
+        }
+    }
+
+    public DifficultyOption? SelectedDifficulty
+    {
+        get => _selectedDifficulty;
+        set
+        {
+            if (SetProperty(ref _selectedDifficulty, value) && value is not null)
+            {
+                _gameStateService.CurrentDifficulty = value.Level;
             }
         }
     }
@@ -61,6 +85,7 @@ public sealed class MenuViewModel : INotifyPropertyChanged
     public string TimeToClockButton => _localizationService.GetString("ModeTimeToClock");
     public string RandomModeButton => _localizationService.GetString("ModeRandom");
     public string LanguageLabel => _localizationService.GetString("LanguageLabel");
+    public string DifficultyLabel => _localizationService.GetString("DifficultyLabel");
 
     private async Task NavigateToGame(GameMode mode)
     {
@@ -79,6 +104,22 @@ public sealed class MenuViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(TimeToClockButton));
         OnPropertyChanged(nameof(RandomModeButton));
         OnPropertyChanged(nameof(LanguageLabel));
+        OnPropertyChanged(nameof(DifficultyLabel));
+        UpdateDifficulties(); // Refresh difficulty names when culture changes
+    }
+
+    private void UpdateDifficulties()
+    {
+        var currentLevel = _selectedDifficulty?.Level ?? DifficultyLevel.Normal;
+        
+        Difficulties.Clear();
+        Difficulties.Add(new DifficultyOption(_localizationService.GetString("DifficultyBeginner"), DifficultyLevel.Beginner));
+        Difficulties.Add(new DifficultyOption(_localizationService.GetString("DifficultyNormal"), DifficultyLevel.Normal));
+        Difficulties.Add(new DifficultyOption(_localizationService.GetString("DifficultyAdvanced"), DifficultyLevel.Advanced));
+
+        // Restore selection
+        SelectedDifficulty = Difficulties.FirstOrDefault(d => d.Level == currentLevel)
+                          ?? Difficulties.First();
     }
 
     private void OnCultureChanged()

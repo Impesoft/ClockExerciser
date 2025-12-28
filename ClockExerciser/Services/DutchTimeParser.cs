@@ -15,6 +15,19 @@ public partial class DutchTimeParser
         {"negen", 9}, {"tien", 10}, {"elf", 11}, {"twaalf", 12}
     };
 
+    private static readonly Dictionary<string, int> MinuteWords = new()
+    {
+        {"een", 1}, {"twee", 2}, {"drie", 3}, {"vier", 4},
+        {"vijf", 5}, {"zes", 6}, {"zeven", 7}, {"acht", 8},
+        {"negen", 9}, {"tien", 10}, {"elf", 11}, {"twaalf", 12},
+        {"dertien", 13}, {"veertien", 14}, {"vijftien", 15},
+        {"zestien", 16}, {"zeventien", 17}, {"achttien", 18},
+        {"negentien", 19}, {"twintig", 20}, {"eenentwintig", 21},
+        {"tweeëntwintig", 22}, {"drieëntwintig", 23}, {"vierentwintig", 24},
+        {"vijfentwintig", 25}, {"zesentwintig", 26}, {"zevenentwintig", 27},
+        {"achtentwintig", 28}, {"negenentwintig", 29}, {"dertig", 30}
+    };
+
     /// <summary>
     /// Attempts to parse a Dutch time expression
     /// </summary>
@@ -27,6 +40,16 @@ public partial class DutchTimeParser
 
         input = input.Trim().ToLowerInvariant();
 
+        // Check compound patterns FIRST (more specific)
+        // "[minuten] voor half [uur]" ? (hour-1):(30-minutes) - e.g., "5 voor half twaalf" = 11:25
+        if (TryParseMinutenVoorHalf(input, out var voorHalfTime))
+            return voorHalfTime;
+
+        // "[minuten] over/na half [uur]" ? (hour-1):(30+minutes) - e.g., "5 na half drie" = 2:35
+        if (TryParseMinutenOverHalf(input, out var overHalfTime))
+            return overHalfTime;
+
+        // Then check simple patterns
         // "kwart over [uur]" ? :15
         if (TryParseKwartOver(input, out var kwartOverTime))
             return kwartOverTime;
@@ -39,17 +62,17 @@ public partial class DutchTimeParser
         if (TryParseHalf(input, out var halfTime))
             return halfTime;
 
-        // "[minuten] over [uur]" ? hour:minutes
-        if (TryParseMinutesOver(input, out var overTime))
+        // "[minuten] over/na [uur]" ? hour:minutes
+        if (TryParseMinutenOver(input, out var overTime))
             return overTime;
 
         // "[minuten] voor [uur]" ? (hour-1):(60-minutes)
-        if (TryParseMinutesVoor(input, out var voorTime))
+        if (TryParseMinutenVoor(input, out var voorTime))
             return voorTime;
 
         // "[uur] uur" ? hour:00
-        if (TryParseExactHour(input, out var hourTime))
-            return hourTime;
+        if (TryParseExactUur(input, out var uurTime))
+            return uurTime;
 
         return null;
     }
@@ -57,7 +80,7 @@ public partial class DutchTimeParser
     private bool TryParseKwartOver(string input, out TimeSpan time)
     {
         var match = KwartOverRegex().Match(input);
-        if (match.Success && HourWords.TryGetValue(match.Groups[1].Value, out var hour))
+        if (match.Success && TryParseUurWoord(match.Groups[1].Value, out var hour))
         {
             time = new TimeSpan(hour, 15, 0);
             return true;
@@ -70,7 +93,7 @@ public partial class DutchTimeParser
     private bool TryParseKwartVoor(string input, out TimeSpan time)
     {
         var match = KwartVoorRegex().Match(input);
-        if (match.Success && HourWords.TryGetValue(match.Groups[1].Value, out var hour))
+        if (match.Success && TryParseUurWoord(match.Groups[1].Value, out var hour))
         {
             // Quarter to = 45 minutes of previous hour
             var actualHour = hour == 1 ? 12 : hour - 1;
@@ -86,7 +109,7 @@ public partial class DutchTimeParser
     {
         // Dutch: "half vijf" = 4:30 (half to five, not half past four!)
         var match = HalfRegex().Match(input);
-        if (match.Success && HourWords.TryGetValue(match.Groups[1].Value, out var hour))
+        if (match.Success && TryParseUurWoord(match.Groups[1].Value, out var hour))
         {
             var actualHour = hour == 1 ? 12 : hour - 1;
             time = new TimeSpan(actualHour, 30, 0);
@@ -97,18 +120,26 @@ public partial class DutchTimeParser
         return false;
     }
 
-    private bool TryParseMinutesOver(string input, out TimeSpan time)
+    private bool TryParseMinutenVoorHalf(string input, out TimeSpan time)
     {
-        var match = MinutesOverRegex().Match(input);
+        // "5 voor half twaalf" = 11:25 (5 minutes before 11:30)
+        var match = MinutenVoorHalfRegex().Match(input);
         if (match.Success)
         {
-            var minuteStr = match.Groups[1].Value;
-            var hourStr = match.Groups[2].Value;
+            var minutenStr = match.Groups[1].Value;
+            var uurStr = match.Groups[2].Value;
 
-            if (TryParseMinuteWord(minuteStr, out var minutes) &&
-                HourWords.TryGetValue(hourStr, out var hour))
+            if (TryParseMinuutWoord(minutenStr, out var minuten) &&
+                TryParseUurWoord(uurStr, out var uur))
             {
-                time = new TimeSpan(hour, minutes, 0);
+                var actueleUur = uur == 1 ? 12 : uur - 1;
+                var actueleMinuten = 30 - minuten;
+                if (actueleMinuten < 0)
+                {
+                    actueleMinuten += 60;
+                    actueleUur = actueleUur == 1 ? 12 : actueleUur - 1;
+                }
+                time = new TimeSpan(actueleUur, actueleMinuten, 0);
                 return true;
             }
         }
@@ -117,19 +148,26 @@ public partial class DutchTimeParser
         return false;
     }
 
-    private bool TryParseMinutesVoor(string input, out TimeSpan time)
+    private bool TryParseMinutenOverHalf(string input, out TimeSpan time)
     {
-        var match = MinutesVoorRegex().Match(input);
+        // "5 over half twaalf" = 11:35 (5 minutes after 11:30)
+        var match = MinutenOverHalfRegex().Match(input);
         if (match.Success)
         {
-            var minuteStr = match.Groups[1].Value;
-            var hourStr = match.Groups[2].Value;
+            var minutenStr = match.Groups[1].Value;
+            var uurStr = match.Groups[2].Value;
 
-            if (TryParseMinuteWord(minuteStr, out var minutes) &&
-                HourWords.TryGetValue(hourStr, out var hour))
+            if (TryParseMinuutWoord(minutenStr, out var minuten) &&
+                TryParseUurWoord(uurStr, out var uur))
             {
-                var actualHour = hour == 1 ? 12 : hour - 1;
-                time = new TimeSpan(actualHour, 60 - minutes, 0);
+                var actueleUur = uur == 1 ? 12 : uur - 1;
+                var actueleMinuten = 30 + minuten;
+                if (actueleMinuten >= 60)
+                {
+                    actueleMinuten -= 60;
+                    actueleUur = actueleUur % 12 + 1;
+                }
+                time = new TimeSpan(actueleUur, actueleMinuten, 0);
                 return true;
             }
         }
@@ -138,12 +176,53 @@ public partial class DutchTimeParser
         return false;
     }
 
-    private bool TryParseExactHour(string input, out TimeSpan time)
+    private bool TryParseMinutenOver(string input, out TimeSpan time)
     {
-        var match = ExactHourRegex().Match(input);
-        if (match.Success && HourWords.TryGetValue(match.Groups[1].Value, out var hour))
+        var match = MinutenOverRegex().Match(input);
+        if (match.Success)
         {
-            time = new TimeSpan(hour, 0, 0);
+            var minutenStr = match.Groups[1].Value;
+            var uurStr = match.Groups[2].Value;
+
+            if (TryParseMinuutWoord(minutenStr, out var minuten) &&
+                TryParseUurWoord(uurStr, out var uur))
+            {
+                time = new TimeSpan(uur, minuten, 0);
+                return true;
+            }
+        }
+
+        time = default;
+        return false;
+    }
+
+    private bool TryParseMinutenVoor(string input, out TimeSpan time)
+    {
+        var match = MinutenVoorRegex().Match(input);
+        if (match.Success)
+        {
+            var minutenStr = match.Groups[1].Value;
+            var uurStr = match.Groups[2].Value;
+
+            if (TryParseMinuutWoord(minutenStr, out var minuten) &&
+                TryParseUurWoord(uurStr, out var uur))
+            {
+                var actueleUur = uur == 1 ? 12 : uur - 1;
+                time = new TimeSpan(actueleUur, 60 - minuten, 0);
+                return true;
+            }
+        }
+
+        time = default;
+        return false;
+    }
+
+    private bool TryParseExactUur(string input, out TimeSpan time)
+    {
+        var match = ExactUurRegex().Match(input);
+        if (match.Success && TryParseUurWoord(match.Groups[1].Value, out var uur))
+        {
+            time = new TimeSpan(uur, 0, 0);
             return true;
         }
 
@@ -151,17 +230,31 @@ public partial class DutchTimeParser
         return false;
     }
 
-    private bool TryParseMinuteWord(string word, out int minutes)
+    private bool TryParseMinuutWoord(string woord, out int minuten)
     {
-        // Handle both word form and numeric form
-        if (int.TryParse(word, out minutes))
-            return minutes >= 0 && minutes < 60;
+        // Try numeric form first
+        if (int.TryParse(woord, out minuten))
+            return minuten >= 0 && minuten < 60;
 
-        // "vijf" can mean 5 minutes when used with "over"/"voor"
-        if (HourWords.TryGetValue(word, out minutes) && minutes <= 30)
+        // Try minute words dictionary
+        if (MinuteWords.TryGetValue(woord, out minuten))
             return true;
 
-        minutes = 0;
+        minuten = 0;
+        return false;
+    }
+
+    private bool TryParseUurWoord(string woord, out int uur)
+    {
+        // Try hour words dictionary
+        if (HourWords.TryGetValue(woord, out uur))
+            return true;
+
+        // Try numeric form (1-12)
+        if (int.TryParse(woord, out uur))
+            return uur >= 1 && uur <= 12;
+
+        uur = 0;
         return false;
     }
 
@@ -174,12 +267,18 @@ public partial class DutchTimeParser
     [GeneratedRegex(@"half (\w+)")]
     private static partial Regex HalfRegex();
 
-    [GeneratedRegex(@"(\w+) over (\w+)")]
-    private static partial Regex MinutesOverRegex();
+    [GeneratedRegex(@"(\w+) voor half (\w+)")]
+    private static partial Regex MinutenVoorHalfRegex();
+
+    [GeneratedRegex(@"(\w+) (?:over|na) half (\w+)")]
+    private static partial Regex MinutenOverHalfRegex();
+
+    [GeneratedRegex(@"(\w+) (?:over|na) (\w+)")]
+    private static partial Regex MinutenOverRegex();
 
     [GeneratedRegex(@"(\w+) voor (\w+)")]
-    private static partial Regex MinutesVoorRegex();
+    private static partial Regex MinutenVoorRegex();
 
     [GeneratedRegex(@"(\w+) uur")]
-    private static partial Regex ExactHourRegex();
+    private static partial Regex ExactUurRegex();
 }

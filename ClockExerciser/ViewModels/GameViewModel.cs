@@ -20,6 +20,7 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     private readonly EnglishTimeParser _englishTimeParser;
     private readonly IGameStateService _gameStateService;
     private readonly Random _random = new();
+    private GameMode _selectedMode = GameMode.ClockToTime; // User's chosen mode (can be Random)
     private TimeSpan _targetTime;
     private string _answerText = string.Empty;
     private string _promptText = string.Empty;
@@ -75,8 +76,8 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     {
         if (query.TryGetValue("mode", out var modeObj) && modeObj is GameMode mode)
         {
-            // Update game state service with new mode
-            _gameStateService.ActiveMode = mode;
+            // Store the user's selected mode (this can be Random)
+            _selectedMode = mode;
             
             // Only start new game if we're coming from menu (no existing game)
             // If there's already a game in progress, just switch mode and continue
@@ -156,9 +157,15 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     
     public int WrongAnswers => _gameStateService.WrongAnswers;
     
+    public int EffectiveScore => _gameStateService.EffectiveScore;
+    
     public int HighScore => _gameStateService.HighScore;
     
     public bool IsGameOver => _gameStateService.IsGameOver;
+    
+    public int MaxWrongAnswers => _gameStateService.MaxWrongAnswers;
+    
+    public bool IsBeginnerMode => _gameStateService.CurrentDifficulty == Models.DifficultyLevel.Beginner;
     
     public string PrimaryButtonText => _localizationService.GetString("SubmitAnswer");
     
@@ -337,8 +344,8 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
             return;
         }
         
-        // Update mode in service
-        _gameStateService.ActiveMode = newMode;
+        // Update the selected mode
+        _selectedMode = newMode;
         
         // Generate new challenge with new mode
         GenerateNewChallenge();
@@ -352,11 +359,14 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
             return;
         }
         
-        // Handle Random mode: randomly pick between ClockToTime and TimeToClock
-        if (_gameStateService.ActiveMode == GameMode.Random)
-        {
-            _gameStateService.ActiveMode = _random.Next(0, 2) == 0 ? GameMode.ClockToTime : GameMode.TimeToClock;
-        }
+        // Determine actual mode for this challenge
+        // If user selected Random, pick randomly; otherwise use their selected mode
+        var challengeMode = _selectedMode == GameMode.Random 
+            ? (_random.Next(0, 2) == 0 ? GameMode.ClockToTime : GameMode.TimeToClock)
+            : _selectedMode;
+        
+        // Update the active mode in service for this challenge
+        _gameStateService.ActiveMode = challengeMode;
         
         TargetTime = CreateRandomTime();
         AnswerText = string.Empty;
@@ -516,8 +526,11 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
         // Notify UI of score and game over state changes
         OnPropertyChanged(nameof(CorrectAnswers));
         OnPropertyChanged(nameof(WrongAnswers));
+        OnPropertyChanged(nameof(EffectiveScore));
         OnPropertyChanged(nameof(HighScore));
         OnPropertyChanged(nameof(IsGameOver));
+        OnPropertyChanged(nameof(MaxWrongAnswers));
+        OnPropertyChanged(nameof(IsBeginnerMode));
         OnPropertyChanged(nameof(IsClockToTime));
         OnPropertyChanged(nameof(IsTimeToClock));
         OnPropertyChanged(nameof(InstructionText));
