@@ -13,7 +13,29 @@
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="18">
 
-            <Grid ColumnDefinitions="*" ColumnSpacing="12">
+            <!-- Mode Switcher (horizontal buttons for quick mode change during game) -->
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8" IsVisible="{Binding IsGameOver, Converter={StaticResource InvertedBoolConverter}}">
+                <Button Grid.Column="0" 
+                        Text="🕐→⏰" 
+                        FontSize="12"
+                        Padding="4,8"
+                        Command="{Binding SwitchToClockToTimeCommand}"
+                        BackgroundColor="{AppThemeBinding Light=#2196F3, Dark=#1976D2}"
+                        TextColor="White" />
+                <Button Grid.Column="1" 
+                        Text="⏰→🕐" 
+                        FontSize="12"
+                        Padding="4,8"
+                        Command="{Binding SwitchToTimeToClockCommand}"
+                        BackgroundColor="{AppThemeBinding Light=#4CAF50, Dark=#388E3C}"
+                        TextColor="White" />
+                <Button Grid.Column="2" 
+                        Text="🎲" 
+                        FontSize="12"
+                        Padding="4,8"
+                        Command="{Binding SwitchToRandomModeCommand}"
+                        BackgroundColor="{AppThemeBinding Light=#FF9800, Dark=#F57C00}"
+                        TextColor="White" />
             </Grid>
 
             <Label Text="{Binding InstructionText}" />

@@ -1,0 +1,14 @@
+<Project>
+	<!-- Android Release Signing Configuration -->
+	<!-- COPY THIS FILE TO 'signing.targets' AND FILL IN YOUR VALUES -->
+	<!-- 'signing.targets' is gitignored, so your credentials won't be committed -->
+	
+	<PropertyGroup Condition="'$(Configuration)' == 'Release' And $(TargetFramework.Contains('android'))">
+		<AndroidKeyStore>True</AndroidKeyStore>
+		<AndroidSigningKeyStore>C:\Path\To\Your\keystore.keystore</AndroidSigningKeyStore>
+		<AndroidSigningKeyAlias>your-key-alias</AndroidSigningKeyAlias>
+		<AndroidSigningKeyPass>your-key-password</AndroidSigningKeyPass>
+		<AndroidSigningStorePass>your-keystore-password</AndroidSigningStorePass>
+		<AndroidUseAapt2>true</AndroidUseAapt2>
+	</PropertyGroup>
+</Project>

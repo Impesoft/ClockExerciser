@@ -1,0 +1,4 @@
+<Project>
+	<!-- Import local signing configuration if it exists (gitignored) -->
+	<Import Project="$(MSBuildThisFileDirectory)signing.targets" Condition="Exists('$(MSBuildThisFileDirectory)signing.targets')" />
+</Project>

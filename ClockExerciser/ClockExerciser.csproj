@@ -44,18 +44,6 @@
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 	</PropertyGroup>
 
-	<!-- Android Release Signing Configuration -->
-	<PropertyGroup Condition="'$(Configuration)' == 'Release' And $(TargetFramework.Contains('android'))">
-		<AndroidKeyStore>True</AndroidKeyStore>
-		<AndroidSigningKeyStore>C:\Users\ward\Documents\clockexerciser.keystore</AndroidSigningKeyStore>
-		<AndroidSigningKeyAlias>clockexerciser</AndroidSigningKeyAlias>
-		<AndroidSigningKeyPass>$(ANDROID_KEY_PASS)</AndroidSigningKeyPass>
-		<AndroidSigningStorePass>$(ANDROID_STORE_PASS)</AndroidSigningStorePass>
-
-		<!-- Optional but commonly desired for Play builds -->
-		<AndroidUseAapt2>true</AndroidUseAapt2>
-	</PropertyGroup>
-
 	<ItemGroup>
 		<!-- App Icon -->
 		<MauiIcon Include="Resources\Images\appicon.svg" Color="#2196F3" />

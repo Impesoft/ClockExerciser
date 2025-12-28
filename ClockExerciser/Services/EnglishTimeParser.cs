@@ -36,7 +36,7 @@ public partial class EnglishTimeParser
         if (TryParseQuarterPast(input, out var quarterPastTime))
             return quarterPastTime;
 
-        // "quarter to [hour]" ? :45
+        // "quarter to/before/of [hour]" ? :45
         if (TryParseQuarterTo(input, out var quarterToTime))
             return quarterToTime;
 
@@ -48,7 +48,7 @@ public partial class EnglishTimeParser
         if (TryParseMinutesPast(input, out var pastTime))
             return pastTime;
 
-        // "[minutes] to [hour]" ? (hour-1):(60-minutes)
+        // "[minutes] to/before/of [hour]" ? (hour-1):(60-minutes)
         if (TryParseMinutesTo(input, out var toTime))
             return toTime;
 
@@ -75,7 +75,7 @@ public partial class EnglishTimeParser
     private bool TryParseQuarterTo(string input, out TimeSpan time)
     {
         var match = QuarterToRegex().Match(input);
-        if (match.Success && HourWords.TryGetValue(match.Groups[1].Value, out var hour))
+        if (match.Success && TryParseHourWord(match.Groups[1].Value, out var hour))
         {
             var actualHour = hour == 1 ? 12 : hour - 1;
             time = new TimeSpan(actualHour, 45, 0);
@@ -108,7 +108,7 @@ public partial class EnglishTimeParser
             var hourStr = match.Groups[2].Value;
 
             if (TryParseMinuteWord(minuteStr, out var minutes) &&
-                HourWords.TryGetValue(hourStr, out var hour))
+                TryParseHourWord(hourStr, out var hour))
             {
                 time = new TimeSpan(hour, minutes, 0);
                 return true;
@@ -128,7 +128,7 @@ public partial class EnglishTimeParser
             var hourStr = match.Groups[2].Value;
 
             if (TryParseMinuteWord(minuteStr, out var minutes) &&
-                HourWords.TryGetValue(hourStr, out var hour))
+                TryParseHourWord(hourStr, out var hour))
             {
                 var actualHour = hour == 1 ? 12 : hour - 1;
                 time = new TimeSpan(actualHour, 60 - minutes, 0);
@@ -183,10 +183,24 @@ public partial class EnglishTimeParser
         return false;
     }
 
+    private bool TryParseHourWord(string word, out int hour)
+    {
+        // Try predefined hour words first
+        if (HourWords.TryGetValue(word, out hour))
+            return true;
+
+        // Try numeric form (1-12)
+        if (int.TryParse(word, out hour))
+            return hour >= 1 && hour <= 12;
+
+        hour = 0;
+        return false;
+    }
+
     [GeneratedRegex(@"quarter past (\w+)")]
     private static partial Regex QuarterPastRegex();
 
-    [GeneratedRegex(@"quarter to (\w+)")]
+    [GeneratedRegex(@"quarter (?:to|before|of) (\w+)")]
     private static partial Regex QuarterToRegex();
 
     [GeneratedRegex(@"half past (\w+)")]
@@ -195,7 +209,7 @@ public partial class EnglishTimeParser
     [GeneratedRegex(@"([\w-]+) past (\w+)")]
     private static partial Regex MinutesPastRegex();
 
-    [GeneratedRegex(@"([\w-]+) to (\w+)")]
+    [GeneratedRegex(@"([\w-]+) (?:to|before|of) (\w+)")]
     private static partial Regex MinutesToRegex();
 
     [GeneratedRegex(@"(\w+) o'?clock")]

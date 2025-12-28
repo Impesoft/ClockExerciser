@@ -18,8 +18,8 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     private readonly IAudioService _audioService;
     private readonly DutchTimeParser _dutchTimeParser;
     private readonly EnglishTimeParser _englishTimeParser;
+    private readonly IGameStateService _gameStateService;
     private readonly Random _random = new();
-    private GameMode _activeMode = GameMode.ClockToTime;
     private TimeSpan _targetTime;
     private string _answerText = string.Empty;
     private string _promptText = string.Empty;
@@ -33,18 +33,17 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     private LanguageOption? _selectedLanguage;
     private IDispatcherTimer? _secondTimer;
     private int _currentSecond = 0;
-    private int _correctAnswers = 0;
-    private int _wrongAnswers = 0;
-    private const int MaxWrongAnswers = 3;
 
     public GameViewModel(LocalizationService localizationService, IAudioService audioService, 
-        DutchTimeParser dutchTimeParser, EnglishTimeParser englishTimeParser)
+        DutchTimeParser dutchTimeParser, EnglishTimeParser englishTimeParser, IGameStateService gameStateService)
     {
         _localizationService = localizationService;
         _audioService = audioService;
         _dutchTimeParser = dutchTimeParser;
         _englishTimeParser = englishTimeParser;
+        _gameStateService = gameStateService;
         _localizationService.CultureChanged += (_, _) => OnCultureChanged();
+        _gameStateService.GameStateChanged += (_, _) => OnGameStateChanged();
 
         Languages = new ObservableCollection<LanguageOption>
         {
@@ -54,6 +53,9 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
 
         CheckAnswerCommand = new Command(ExecutePrimaryAction);
         NewGameCommand = new Command(StartNewGame);
+        SwitchToClockToTimeCommand = new Command(() => SwitchMode(GameMode.ClockToTime));
+        SwitchToTimeToClockCommand = new Command(() => SwitchMode(GameMode.TimeToClock));
+        SwitchToRandomModeCommand = new Command(() => SwitchMode(GameMode.Random));
 
         UpdateCultureDependentData();
 
@@ -73,8 +75,20 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     {
         if (query.TryGetValue("mode", out var modeObj) && modeObj is GameMode mode)
         {
-            _activeMode = mode;
-            StartNewGame();
+            // Update game state service with new mode
+            _gameStateService.ActiveMode = mode;
+            
+            // Only start new game if we're coming from menu (no existing game)
+            // If there's already a game in progress, just switch mode and continue
+            if (_gameStateService.CorrectAnswers == 0 && _gameStateService.WrongAnswers == 0)
+            {
+                StartNewGame();
+            }
+            else
+            {
+                // Just generate new challenge with the new mode
+                GenerateNewChallenge();
+            }
         }
     }
 
@@ -132,41 +146,19 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
         private set => SetProperty(ref _resultSuccess, value);
     }
 
-    public bool CanSubmit => _activeMode == GameMode.ClockToTime ? !string.IsNullOrWhiteSpace(AnswerText) : true;
+    public bool CanSubmit => IsClockToTime ? !string.IsNullOrWhiteSpace(AnswerText) : true;
 
-    public bool IsClockToTime => _activeMode == GameMode.ClockToTime;
+    public bool IsClockToTime => _gameStateService.ActiveMode == GameMode.ClockToTime;
 
-    public bool IsTimeToClock => _activeMode == GameMode.TimeToClock;
+    public bool IsTimeToClock => _gameStateService.ActiveMode == GameMode.TimeToClock;
     
-    public int CorrectAnswers
-    {
-        get => _correctAnswers;
-        private set => SetProperty(ref _correctAnswers, value);
-    }
+    public int CorrectAnswers => _gameStateService.CorrectAnswers;
     
-    public int WrongAnswers
-    {
-        get => _wrongAnswers;
-        private set
-        {
-            if (SetProperty(ref _wrongAnswers, value))
-            {
-                OnPropertyChanged(nameof(IsGameOver));
-            }
-        }
-    }
+    public int WrongAnswers => _gameStateService.WrongAnswers;
     
-    public int HighScore
-    {
-        get => Preferences.Get("HighScore", 0);
-        private set
-        {
-            Preferences.Set("HighScore", value);
-            OnPropertyChanged();
-        }
-    }
+    public int HighScore => _gameStateService.HighScore;
     
-    public bool IsGameOver => _wrongAnswers >= MaxWrongAnswers;
+    public bool IsGameOver => _gameStateService.IsGameOver;
     
     public string PrimaryButtonText => _localizationService.GetString("SubmitAnswer");
     
@@ -286,6 +278,9 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
 
     public Command CheckAnswerCommand { get; }
     public Command NewGameCommand { get; }
+    public Command SwitchToClockToTimeCommand { get; }
+    public Command SwitchToTimeToClockCommand { get; }
+    public Command SwitchToRandomModeCommand { get; }
 
     private void ExecutePrimaryAction()
     {
@@ -301,7 +296,7 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     
     private void ExecuteCheckAnswer()
     {
-        if (_activeMode == GameMode.ClockToTime)
+        if (_gameStateService.ActiveMode == GameMode.ClockToTime)
         {
             EvaluateTextAnswer();
         }
@@ -324,14 +319,28 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     
     private void StartNewGame()
     {
-        // Reset game state
-        CorrectAnswers = 0;
-        WrongAnswers = 0;
+        // Reset game state through service
+        _gameStateService.ResetGame();
         ResultVisible = false;
         ResultMessage = string.Empty;
         ResultSuccess = false;
         
         // Generate first challenge
+        GenerateNewChallenge();
+    }
+    
+    private void SwitchMode(GameMode newMode)
+    {
+        // Don't switch mode if game is over
+        if (IsGameOver)
+        {
+            return;
+        }
+        
+        // Update mode in service
+        _gameStateService.ActiveMode = newMode;
+        
+        // Generate new challenge with new mode
         GenerateNewChallenge();
     }
 
@@ -343,7 +352,12 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
             return;
         }
         
-        _activeMode = _activeMode == GameMode.Random ? (_random.Next(0, 2) == 0 ? GameMode.ClockToTime : GameMode.TimeToClock) : _activeMode;
+        // Handle Random mode: randomly pick between ClockToTime and TimeToClock
+        if (_gameStateService.ActiveMode == GameMode.Random)
+        {
+            _gameStateService.ActiveMode = _random.Next(0, 2) == 0 ? GameMode.ClockToTime : GameMode.TimeToClock;
+        }
+        
         TargetTime = CreateRandomTime();
         AnswerText = string.Empty;
         ResultVisible = false;
@@ -443,20 +457,14 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
         
         ResultVisible = true;
 
-        // Update score based on result
+        // Update score based on result through service
         if (success)
         {
-            CorrectAnswers++;
-            
-            // Update high score if current score is higher
-            if (CorrectAnswers > HighScore)
-            {
-                HighScore = CorrectAnswers;
-            }
+            _gameStateService.CorrectAnswers++;
         }
         else
         {
-            WrongAnswers++;
+            _gameStateService.WrongAnswers++;
             
             // Check if game is over
             if (IsGameOver)
@@ -501,6 +509,18 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     {
         UpdateCultureDependentData();
         UpdatePromptTexts();
+    }
+
+    private void OnGameStateChanged()
+    {
+        // Notify UI of score and game over state changes
+        OnPropertyChanged(nameof(CorrectAnswers));
+        OnPropertyChanged(nameof(WrongAnswers));
+        OnPropertyChanged(nameof(HighScore));
+        OnPropertyChanged(nameof(IsGameOver));
+        OnPropertyChanged(nameof(IsClockToTime));
+        OnPropertyChanged(nameof(IsTimeToClock));
+        OnPropertyChanged(nameof(InstructionText));
     }
 
     private TimeSpan CreateRandomTime()

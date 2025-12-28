@@ -365,6 +365,7 @@ FodyWeavers.xsd
 *.keystore
 *.jks
 signing.properties
+signing.targets
 
 # MAUI local secrets (do not commit)
 ClockExerciser/secrets.json

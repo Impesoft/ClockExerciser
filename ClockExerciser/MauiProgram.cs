@@ -98,6 +98,7 @@ namespace ClockExerciser
 
                 Log("📦 Registering services...");
                 builder.Services.AddSingleton<LocalizationService>();
+                builder.Services.AddSingleton<IGameStateService, GameStateService>();
                 builder.Services.AddSingleton<IAudioService, AudioService>();
                 builder.Services.AddSingleton<DutchTimeParser>();
                 builder.Services.AddSingleton<EnglishTimeParser>();
