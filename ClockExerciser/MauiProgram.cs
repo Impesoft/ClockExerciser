@@ -102,6 +102,16 @@ namespace ClockExerciser
                 builder.Services.AddSingleton<IAudioService, AudioService>();
                 builder.Services.AddSingleton<ISettingsService, SettingsService>();
                 builder.Services.AddSingleton<ITextToSpeechService, TextToSpeechService>();
+                
+                // Register platform-specific speech recognition service
+#if ANDROID
+                builder.Services.AddSingleton<ISpeechRecognitionService, Platforms.Android.SpeechRecognitionService>();
+#else
+                // For other platforms, we'll need separate implementations
+                // For now, register a null implementation or stub
+                builder.Services.AddSingleton<ISpeechRecognitionService>(sp => null!);
+#endif
+                
                 builder.Services.AddSingleton<DutchTimeParser>();
                 builder.Services.AddSingleton<EnglishTimeParser>();
                 builder.Services.AddTransient<ViewModels.GameViewModel>();

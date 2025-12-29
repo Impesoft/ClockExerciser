@@ -18,6 +18,7 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     private readonly IAudioService _audioService;
     private readonly ISettingsService _settingsService;
     private readonly ITextToSpeechService _ttsService;
+    private readonly ISpeechRecognitionService? _speechRecognitionService;
     private readonly DutchTimeParser _dutchTimeParser;
     private readonly EnglishTimeParser _englishTimeParser;
     private readonly IGameStateService _gameStateService;
@@ -40,12 +41,14 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
 
     public GameViewModel(LocalizationService localizationService, IAudioService audioService,
         ISettingsService settingsService, ITextToSpeechService ttsService,
+        ISpeechRecognitionService? speechRecognitionService,
         DutchTimeParser dutchTimeParser, EnglishTimeParser englishTimeParser, IGameStateService gameStateService)
     {
         _localizationService = localizationService;
         _audioService = audioService;
         _settingsService = settingsService;
         _ttsService = ttsService;
+        _speechRecognitionService = speechRecognitionService;
         _dutchTimeParser = dutchTimeParser;
         _englishTimeParser = englishTimeParser;
         _gameStateService = gameStateService;
@@ -63,6 +66,7 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
         SwitchToClockToTimeCommand = new Command(() => SwitchMode(GameMode.ClockToTime));
         SwitchToTimeToClockCommand = new Command(() => SwitchMode(GameMode.TimeToClock));
         SwitchToRandomModeCommand = new Command(() => SwitchMode(GameMode.Random));
+        MicrophoneCommand = new Command(async () => await UseSpeechRecognitionAsync());
 
         UpdateCultureDependentData();
 
@@ -294,6 +298,7 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     public Command SwitchToClockToTimeCommand { get; }
     public Command SwitchToTimeToClockCommand { get; }
     public Command SwitchToRandomModeCommand { get; }
+    public Command MicrophoneCommand { get; }
 
     private void ExecutePrimaryAction()
     {
@@ -857,6 +862,59 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
                 System.Diagnostics.Debug.WriteLine($"?? SpeakFeedbackAsync Error: {ex.Message}");
             }
         });
+    }
+
+    private async Task UseSpeechRecognitionAsync()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("?? UseSpeechRecognitionAsync: Starting");
+
+            // Check if speech recognition service is available
+            if (_speechRecognitionService == null)
+            {
+                System.Diagnostics.Debug.WriteLine("?? Speech recognition service not available on this platform");
+                return;
+            }
+
+            // Check if voice input is enabled
+            var voiceInputEnabled = await _settingsService.GetVoiceInputEnabledAsync();
+            System.Diagnostics.Debug.WriteLine($"?? Voice input enabled: {voiceInputEnabled}");
+            
+            if (!voiceInputEnabled)
+                return;
+
+            // Check if available
+            if (!await _speechRecognitionService.IsAvailableAsync())
+            {
+                System.Diagnostics.Debug.WriteLine("?? Speech recognition not available on device");
+                return;
+            }
+
+            // Get current locale
+            var currentLanguage = _localizationService.CurrentCulture.TwoLetterISOLanguageName;
+            var preferredLocale = await _settingsService.GetPreferredLocaleAsync(currentLanguage);
+            System.Diagnostics.Debug.WriteLine($"?? Using locale: {preferredLocale}");
+
+            // Start recognition
+            var recognizedText = await _speechRecognitionService.RecognizeAsync(preferredLocale);
+            System.Diagnostics.Debug.WriteLine($"?? Recognized text: '{recognizedText}'");
+
+            if (!string.IsNullOrWhiteSpace(recognizedText))
+            {
+                // Set the recognized text as the answer
+                AnswerText = recognizedText;
+                System.Diagnostics.Debug.WriteLine($"?? Answer text set to: '{AnswerText}'");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("?? No text recognized or recognition cancelled");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"?? UseSpeechRecognitionAsync Error: {ex.Message}");
+        }
     }
     
     public void Dispose()
