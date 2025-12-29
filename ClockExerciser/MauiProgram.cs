@@ -100,12 +100,16 @@ namespace ClockExerciser
                 builder.Services.AddSingleton<LocalizationService>();
                 builder.Services.AddSingleton<IGameStateService, GameStateService>();
                 builder.Services.AddSingleton<IAudioService, AudioService>();
+                builder.Services.AddSingleton<ISettingsService, SettingsService>();
+                builder.Services.AddSingleton<ITextToSpeechService, TextToSpeechService>();
                 builder.Services.AddSingleton<DutchTimeParser>();
                 builder.Services.AddSingleton<EnglishTimeParser>();
                 builder.Services.AddTransient<ViewModels.GameViewModel>();
                 builder.Services.AddTransient<ViewModels.MenuViewModel>();
+                builder.Services.AddTransient<ViewModels.SettingsViewModel>();
                 builder.Services.AddTransient<GamePage>();
                 builder.Services.AddTransient<MenuPage>();
+                builder.Services.AddTransient<Pages.SettingsPage>();
                 Log("✅ All services registered");
 
 #if DEBUG

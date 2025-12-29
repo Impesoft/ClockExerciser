@@ -83,7 +83,30 @@ ClockExerciser/
 - Add translations to `Resources/Strings/AppResources.nl-NL.resx` (Dutch)
 - **Never hardcode UI strings in XAML or C#**
 
-Example:
+### **IMPORTANT: Localization Workflow**
+**DO NOT attempt to add or modify resource strings yourself!**
+
+When you need new localized strings:
+1. **STOP** and list all required string keys with their English and Dutch values
+2. **WAIT** for the user to add them to the resource files
+3. Only continue implementation after user confirms strings are added
+
+Example request format:
+```
+I need the following localization strings:
+
+English (AppResources.resx):
+- SettingsTitle = "Settings"
+- VoiceOutputLabel = "Voice Output"
+
+Dutch (AppResources.nl-NL.resx):
+- SettingsTitle = "Instellingen"
+- VoiceOutputLabel = "Spraakuitvoer"
+
+Please add these strings and let me know when ready to continue.
+```
+
+Example usage (after strings are added):
 ```csharp
 var title = _localizationService.GetString("AppTitle");
 ```

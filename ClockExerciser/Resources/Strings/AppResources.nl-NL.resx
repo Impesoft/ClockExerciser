@@ -210,4 +210,49 @@
   <data name="DifficultyAdvanced" xml:space="preserve">
     <value>Gevorderd</value>
   </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Instellingen</value>
+  </data>
+  <data name="SettingsButton" xml:space="preserve">
+    <value>⚙️ Instellingen</value>
+  </data>
+  <data name="VoiceOutputLabel" xml:space="preserve">
+    <value>Spraakuitvoer</value>
+  </data>
+  <data name="VoiceOutputDescription" xml:space="preserve">
+    <value>Spreek aanwijzingen en feedback hardop uit</value>
+  </data>
+  <data name="VoiceRegionLabel" xml:space="preserve">
+    <value>Accent / Regio</value>
+  </data>
+  <data name="TestVoiceButtonText" xml:space="preserve">
+    <value>🔊 Test Stem</value>
+  </data>
+  <data name="TestVoicePhrase" xml:space="preserve">
+    <value>Hallo! Zo zal ik tegen je praten.</value>
+  </data>
+  <data name="VoiceInputLabel" xml:space="preserve">
+    <value>Spraakinvoer</value>
+  </data>
+  <data name="VoiceInputDescription" xml:space="preserve">
+    <value>Spreek uw antwoorden in met de microfoon</value>
+  </data>
+  <data name="TTSCorrect" xml:space="preserve">
+    <value>Correct! Goed gedaan!</value>
+  </data>
+  <data name="TTSIncorrect" xml:space="preserve">
+    <value>Niet helemaal goed. Probeer het opnieuw!</value>
+  </data>
+  <data name="TTSScore" xml:space="preserve">
+    <value>Geweldig! Je hebt {0} punten gescoord!</value>
+  </data>
+  <data name="Listening" xml:space="preserve">
+    <value>Aan het luisteren...</value>
+  </data>
+  <data name="SpeechRecognitionFailed" xml:space="preserve">
+    <value>Kon u niet verstaan. Typ uw antwoord alstublieft.</value>
+  </data>
+  <data name="MicrophonePermissionDenied" xml:space="preserve">
+    <value>Microfoontoestemming vereist voor spraakinvoer.</value>
+  </data>
 </root>

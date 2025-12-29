@@ -16,6 +16,8 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
 {
     private readonly LocalizationService _localizationService;
     private readonly IAudioService _audioService;
+    private readonly ISettingsService _settingsService;
+    private readonly ITextToSpeechService _ttsService;
     private readonly DutchTimeParser _dutchTimeParser;
     private readonly EnglishTimeParser _englishTimeParser;
     private readonly IGameStateService _gameStateService;
@@ -36,11 +38,14 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     private int _currentSecond = 0;
     private bool _isCheckingAnswer = false; // Prevents rapid-fire submissions
 
-    public GameViewModel(LocalizationService localizationService, IAudioService audioService, 
+    public GameViewModel(LocalizationService localizationService, IAudioService audioService,
+        ISettingsService settingsService, ITextToSpeechService ttsService,
         DutchTimeParser dutchTimeParser, EnglishTimeParser englishTimeParser, IGameStateService gameStateService)
     {
         _localizationService = localizationService;
         _audioService = audioService;
+        _settingsService = settingsService;
+        _ttsService = ttsService;
         _dutchTimeParser = dutchTimeParser;
         _englishTimeParser = englishTimeParser;
         _gameStateService = gameStateService;
@@ -62,7 +67,7 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
         UpdateCultureDependentData();
 
         // Set selected language to match current culture from service
-        SelectedLanguage = Languages.FirstOrDefault(l => l.Culture.Name == _localizationService.CurrentCulture.Name) 
+        SelectedLanguage = Languages.FirstOrDefault(l => l.Culture.Name == _localizationService.CurrentCulture.Name)
                           ?? Languages.First();
         
         // Start the second hand timer
@@ -308,9 +313,7 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
     
     private void ExecuteCheckAnswer()
     {
-        if (_isCheckingAnswer) return; // Ignore if already checking answer
-        _isCheckingAnswer = true; // Set flag to ignore further clicks
-        
+        // Process the answer
         if (_gameStateService.ActiveMode == GameMode.ClockToTime)
         {
             EvaluateTextAnswer();
@@ -329,10 +332,18 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
                 Application.Current?.Dispatcher.Dispatch(() => GenerateNewChallenge());
             });
         }
-        // If game is over after wrong answer, don't auto-advance
-
-        // Clear flag after a short delay to allow next click
-        Task.Delay(500).ContinueWith(_ => _isCheckingAnswer = false);
+        else
+        {
+            // If answer was wrong, re-enable the button after a short delay
+            Task.Delay(500).ContinueWith(_ => 
+            {
+                Application.Current?.Dispatcher.Dispatch(() =>
+                {
+                    _isCheckingAnswer = false;
+                    OnPropertyChanged(nameof(CanSubmit));
+                });
+            });
+        }
     }
     
     private void StartNewGame()
@@ -399,8 +410,11 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
         OnPropertyChanged(nameof(HourPointerValue));
         OnPropertyChanged(nameof(MinutePointerValue));
         OnPropertyChanged(nameof(SecondPointerValue));
+        
+        // Speak the prompt if voice output is enabled
+        SpeakPromptAsync();
     }
-
+    
     private void EvaluateTextAnswer()
     {
         if (!TryParseUserTime(out var userTime))
@@ -499,6 +513,9 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
 
         // Play audio feedback
         _ = success ? _audioService.PlaySuccessSound() : _audioService.PlayErrorSound();
+        
+        // Speak feedback if voice output is enabled
+        SpeakFeedbackAsync(success);
     }
 
     private void ResetUserHands()
@@ -744,6 +761,102 @@ public sealed class GameViewModel : INotifyPropertyChanged, IQueryAttributable, 
             };
             _secondTimer.Start();
         }
+    }
+    
+    private void SpeakPromptAsync()
+    {
+        // Fire-and-forget - don't block UI
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("?? SpeakPromptAsync: Starting");
+                
+                // Check if voice output is enabled
+                var voiceEnabled = await _settingsService.GetVoiceOutputEnabledAsync();
+                System.Diagnostics.Debug.WriteLine($"?? Voice output enabled: {voiceEnabled}");
+                
+                if (!voiceEnabled)
+                    return;
+
+                // Get preferred locale for current language
+                var currentLanguage = _localizationService.CurrentCulture.TwoLetterISOLanguageName;
+                var preferredLocale = await _settingsService.GetPreferredLocaleAsync(currentLanguage);
+                System.Diagnostics.Debug.WriteLine($"?? Preferred locale: {preferredLocale}");
+
+                // Determine what to speak based on mode
+                string textToSpeak;
+                if (IsClockToTime)
+                {
+                    // Clock to Time: "What time is shown on the clock?"
+                    textToSpeak = InstructionText;
+                }
+                else
+                {
+                    // Time to Clock: "Set the clock to [time]"
+                    textToSpeak = $"{InstructionText} {PromptText}";
+                }
+
+                System.Diagnostics.Debug.WriteLine($"?? About to speak: '{textToSpeak}'");
+                await _ttsService.SpeakAsync(textToSpeak, preferredLocale);
+                System.Diagnostics.Debug.WriteLine("?? SpeakPromptAsync: Completed");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"?? SpeakPromptAsync Error: {ex.Message}");
+            }
+        });
+    }
+
+    private void SpeakFeedbackAsync(bool success)
+    {
+        // Fire-and-forget - don't block UI
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("?? SpeakFeedbackAsync: Starting");
+                
+                // Check if voice output is enabled
+                var voiceEnabled = await _settingsService.GetVoiceOutputEnabledAsync();
+                System.Diagnostics.Debug.WriteLine($"?? Voice output enabled: {voiceEnabled}");
+                
+                if (!voiceEnabled)
+                    return;
+
+                // Get preferred locale for current language
+                var currentLanguage = _localizationService.CurrentCulture.TwoLetterISOLanguageName;
+                var preferredLocale = await _settingsService.GetPreferredLocaleAsync(currentLanguage);
+                System.Diagnostics.Debug.WriteLine($"?? Preferred locale: {preferredLocale}");
+
+                // Speak appropriate feedback
+                string textToSpeak;
+                if (IsGameOver)
+                {
+                    // Game over: speak final score
+                    textToSpeak = string.Format(
+                        _localizationService.GetString("TTSScore"),
+                        CorrectAnswers
+                    );
+                }
+                else if (success)
+                {
+                    textToSpeak = _localizationService.GetString("TTSCorrect");
+                }
+                else
+                {
+                    textToSpeak = _localizationService.GetString("TTSIncorrect");
+                }
+
+                System.Diagnostics.Debug.WriteLine($"?? About to speak feedback: '{textToSpeak}'");
+                await _ttsService.SpeakAsync(textToSpeak, preferredLocale);
+                System.Diagnostics.Debug.WriteLine("?? SpeakFeedbackAsync: Completed");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"?? SpeakFeedbackAsync Error: {ex.Message}");
+            }
+        });
     }
     
     public void Dispose()

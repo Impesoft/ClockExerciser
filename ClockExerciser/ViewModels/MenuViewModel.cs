@@ -33,6 +33,7 @@ public sealed class MenuViewModel : INotifyPropertyChanged
         ClockToTimeCommand = new Command(async () => await NavigateToGame(GameMode.ClockToTime));
         TimeToClockCommand = new Command(async () => await NavigateToGame(GameMode.TimeToClock));
         RandomModeCommand = new Command(async () => await NavigateToGame(GameMode.Random));
+        SettingsCommand = new Command(async () => await Shell.Current.GoToAsync("///settings"));
 
         UpdateCultureDependentData();
         
@@ -77,6 +78,7 @@ public sealed class MenuViewModel : INotifyPropertyChanged
     public Command ClockToTimeCommand { get; }
     public Command TimeToClockCommand { get; }
     public Command RandomModeCommand { get; }
+    public Command SettingsCommand { get; }
 
     public string AppTitle => _localizationService.GetString("AppTitle");
     public string MenuTitle => _localizationService.GetString("MenuTitle");
@@ -84,6 +86,7 @@ public sealed class MenuViewModel : INotifyPropertyChanged
     public string ClockToTimeButton => _localizationService.GetString("ModeClockToTime");
     public string TimeToClockButton => _localizationService.GetString("ModeTimeToClock");
     public string RandomModeButton => _localizationService.GetString("ModeRandom");
+    public string SettingsButton => _localizationService.GetString("SettingsButton");
     public string LanguageLabel => _localizationService.GetString("LanguageLabel");
     public string DifficultyLabel => _localizationService.GetString("DifficultyLabel");
 
@@ -103,6 +106,7 @@ public sealed class MenuViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(ClockToTimeButton));
         OnPropertyChanged(nameof(TimeToClockButton));
         OnPropertyChanged(nameof(RandomModeButton));
+        OnPropertyChanged(nameof(SettingsButton));
         OnPropertyChanged(nameof(LanguageLabel));
         OnPropertyChanged(nameof(DifficultyLabel));
         UpdateDifficulties(); // Refresh difficulty names when culture changes
