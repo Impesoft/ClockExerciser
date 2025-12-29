@@ -32,11 +32,11 @@
 
 		<!-- Versions -->
 		<!-- Display version (what users see in store/about) -->
-		<ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
+		<ApplicationDisplayVersion>1.0.2</ApplicationDisplayVersion>
 		<!-- Version code (integer that must increment) -->
-		<ApplicationVersion>2</ApplicationVersion>
+		<ApplicationVersion>3</ApplicationVersion>
 		<!-- Optional: Add informational version for internal tracking -->
-		<InformationalVersion>1.0.1-alpha</InformationalVersion>
+		<InformationalVersion>1.0.2-alpha</InformationalVersion>
 
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
 		<WindowsPackageType>None</WindowsPackageType>
