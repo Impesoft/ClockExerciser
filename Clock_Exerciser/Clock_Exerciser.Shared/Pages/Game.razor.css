@@ -83,11 +83,13 @@
 
     .instruction {
         margin-bottom: -4px;
-        overflow: hidden;
         font-size: 14px;
-        line-height: 1.15;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        margin: 0;
+        line-height: 1.32;
+        max-width: 100%;
+        min-width: 0;
+        overflow-wrap: break-word;
+        white-space: normal;
     }
 
     .clock-border {

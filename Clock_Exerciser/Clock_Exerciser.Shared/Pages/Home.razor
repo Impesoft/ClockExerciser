@@ -25,7 +25,7 @@
                           SelectedCultureNameChanged="OnLanguageChangedAsync" />
     </section>
 
-    @if (!string.IsNullOrWhiteSpace(DeviceMetricsText))
+    @if (!string.IsNullOrWhiteSpace(DeviceMetricsText) && showResolution)
     {
         <aside class="device-metrics-overlay" aria-live="polite">
             @DeviceMetricsText

@@ -10,6 +10,7 @@ public partial class Home : IAsyncDisposable
     private IJSObjectReference? _deviceMetricsModule;
     private DotNetObjectReference<Home>? _dotNetReference;
     private string? _deviceMetricsListenerId;
+    private bool showResolution = false;
 
     [Inject]
     private ClockExerciseState State { get; set; } = default!;
