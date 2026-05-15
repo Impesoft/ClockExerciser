@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Clock_Exerciser.Core.Services;
@@ -37,7 +39,8 @@ public sealed partial class EnglishTimeParser
             return null;
         }
 
-        input = input.Trim().ToLowerInvariant();
+        // Normalize input
+        input = NormalizeInput(input);
 
         if (TryParseQuarterPast(input, out var quarterPastTime))
         {
@@ -72,10 +75,18 @@ public sealed partial class EnglishTimeParser
         return null;
     }
 
+    /// <summary>
+    /// Normalize input: lowercase, trim
+    /// </summary>
+    private static string NormalizeInput(string input)
+    {
+        return input.Trim().ToLowerInvariant();
+    }
+
     private static bool TryParseQuarterPast(string input, out TimeSpan time)
     {
         var match = QuarterPastRegex().Match(input);
-        if (match.Success && HourWords.TryGetValue(match.Groups[1].Value, out var hour))
+        if (match.Success && TryParseHourValue(match.Groups[1].Value, out var hour))
         {
             time = new TimeSpan(hour, 15, 0);
             return true;
@@ -88,7 +99,7 @@ public sealed partial class EnglishTimeParser
     private static bool TryParseQuarterTo(string input, out TimeSpan time)
     {
         var match = QuarterToRegex().Match(input);
-        if (match.Success && HourWords.TryGetValue(match.Groups[1].Value, out var hour))
+        if (match.Success && TryParseHourValue(match.Groups[1].Value, out var hour))
         {
             var actualHour = hour == 1 ? 12 : hour - 1;
             time = new TimeSpan(actualHour, 45, 0);
@@ -102,7 +113,7 @@ public sealed partial class EnglishTimeParser
     private static bool TryParseHalfPast(string input, out TimeSpan time)
     {
         var match = HalfPastRegex().Match(input);
-        if (match.Success && HourWords.TryGetValue(match.Groups[1].Value, out var hour))
+        if (match.Success && TryParseHourValue(match.Groups[1].Value, out var hour))
         {
             time = new TimeSpan(hour, 30, 0);
             return true;
@@ -120,7 +131,7 @@ public sealed partial class EnglishTimeParser
             var minuteText = match.Groups[1].Value;
             var hourText = match.Groups[2].Value;
 
-            if (TryParseMinuteWord(minuteText, out var minutes) && HourWords.TryGetValue(hourText, out var hour))
+            if (TryParseMinuteValue(minuteText, out var minutes) && TryParseHourValue(hourText, out var hour))
             {
                 time = new TimeSpan(hour, minutes, 0);
                 return true;
@@ -139,7 +150,7 @@ public sealed partial class EnglishTimeParser
             var minuteText = match.Groups[1].Value;
             var hourText = match.Groups[2].Value;
 
-            if (TryParseMinuteWord(minuteText, out var minutes) && HourWords.TryGetValue(hourText, out var hour))
+            if (TryParseMinuteValue(minuteText, out var minutes) && TryParseHourValue(hourText, out var hour))
             {
                 var actualHour = hour == 1 ? 12 : hour - 1;
                 time = new TimeSpan(actualHour, 60 - minutes, 0);
@@ -154,7 +165,7 @@ public sealed partial class EnglishTimeParser
     private static bool TryParseOClock(string input, out TimeSpan time)
     {
         var match = OClockRegex().Match(input);
-        if (match.Success && HourWords.TryGetValue(match.Groups[1].Value, out var hour))
+        if (match.Success && TryParseHourValue(match.Groups[1].Value, out var hour))
         {
             time = new TimeSpan(hour, 0, 0);
             return true;
@@ -164,18 +175,39 @@ public sealed partial class EnglishTimeParser
         return false;
     }
 
-    private static bool TryParseMinuteWord(string word, out int minutes)
+    /// <summary>
+    /// Parse hour value from either text (one, two, ...) or number (1, 2, ...)
+    /// </summary>
+    private static bool TryParseHourValue(string text, out int hour)
     {
+        // Try numeric first (e.g., "10")
+        if (int.TryParse(text, out hour))
+        {
+            return hour >= 1 && hour <= 12;
+        }
+
+        // Try word lookup (e.g., "ten")
+        return HourWords.TryGetValue(text, out hour);
+    }
+
+    /// <summary>
+    /// Parse minute value from text (five, ten, twenty-five, ...) or number (5, 10, ...)
+    /// </summary>
+    private static bool TryParseMinuteValue(string word, out int minutes)
+    {
+        // Try predefined minute words first (five, ten, quarter, twenty, twenty-five, half)
         if (MinuteWords.TryGetValue(word, out minutes))
         {
             return true;
         }
 
+        // Try numeric (e.g., "5", "10", "25")
         if (int.TryParse(word, out minutes))
         {
             return minutes >= 0 && minutes < 60;
         }
 
+        // Handle compound forms like "twenty-one", "twenty-two", etc.
         if (word.Contains('-'))
         {
             var parts = word.Split('-');

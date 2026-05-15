@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Clock_Exerciser.Core.Services;
@@ -27,7 +29,8 @@ public sealed partial class DutchTimeParser
             return null;
         }
 
-        input = input.Trim().ToLowerInvariant();
+        // Normalize: remove accents, lowercase, trim
+        input = NormalizeInput(input);
 
         if (TryParseKwartOver(input, out var kwartOverTime))
         {
@@ -62,10 +65,33 @@ public sealed partial class DutchTimeParser
         return null;
     }
 
+    /// <summary>
+    /// Normalize input: lowercase, remove accents (één → een), trim
+    /// </summary>
+    private static string NormalizeInput(string input)
+    {
+        input = input.Trim().ToLowerInvariant();
+
+        // Remove diacritics/accents (één → een, ë → e, etc.)
+        var normalizedString = input.Normalize(NormalizationForm.FormD);
+        var stringBuilder = new StringBuilder();
+
+        foreach (var c in normalizedString)
+        {
+            var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+            if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+            {
+                stringBuilder.Append(c);
+            }
+        }
+
+        return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
+    }
+
     private static bool TryParseKwartOver(string input, out TimeSpan time)
     {
         var match = KwartOverRegex().Match(input);
-        if (match.Success && HourWords.TryGetValue(match.Groups[1].Value, out var hour))
+        if (match.Success && TryParseHourValue(match.Groups[1].Value, out var hour))
         {
             time = new TimeSpan(hour, 15, 0);
             return true;
@@ -78,7 +104,7 @@ public sealed partial class DutchTimeParser
     private static bool TryParseKwartVoor(string input, out TimeSpan time)
     {
         var match = KwartVoorRegex().Match(input);
-        if (match.Success && HourWords.TryGetValue(match.Groups[1].Value, out var hour))
+        if (match.Success && TryParseHourValue(match.Groups[1].Value, out var hour))
         {
             var actualHour = hour == 1 ? 12 : hour - 1;
             time = new TimeSpan(actualHour, 45, 0);
@@ -92,7 +118,7 @@ public sealed partial class DutchTimeParser
     private static bool TryParseHalf(string input, out TimeSpan time)
     {
         var match = HalfRegex().Match(input);
-        if (match.Success && HourWords.TryGetValue(match.Groups[1].Value, out var hour))
+        if (match.Success && TryParseHourValue(match.Groups[1].Value, out var hour))
         {
             var actualHour = hour == 1 ? 12 : hour - 1;
             time = new TimeSpan(actualHour, 30, 0);
@@ -111,7 +137,7 @@ public sealed partial class DutchTimeParser
             var minuteText = match.Groups[1].Value;
             var hourText = match.Groups[2].Value;
 
-            if (TryParseMinuteWord(minuteText, out var minutes) && HourWords.TryGetValue(hourText, out var hour))
+            if (TryParseMinuteValue(minuteText, out var minutes) && TryParseHourValue(hourText, out var hour))
             {
                 time = new TimeSpan(hour, minutes, 0);
                 return true;
@@ -130,7 +156,7 @@ public sealed partial class DutchTimeParser
             var minuteText = match.Groups[1].Value;
             var hourText = match.Groups[2].Value;
 
-            if (TryParseMinuteWord(minuteText, out var minutes) && HourWords.TryGetValue(hourText, out var hour))
+            if (TryParseMinuteValue(minuteText, out var minutes) && TryParseHourValue(hourText, out var hour))
             {
                 var actualHour = hour == 1 ? 12 : hour - 1;
                 time = new TimeSpan(actualHour, 60 - minutes, 0);
@@ -145,7 +171,7 @@ public sealed partial class DutchTimeParser
     private static bool TryParseExactHour(string input, out TimeSpan time)
     {
         var match = ExactHourRegex().Match(input);
-        if (match.Success && HourWords.TryGetValue(match.Groups[1].Value, out var hour))
+        if (match.Success && TryParseHourValue(match.Groups[1].Value, out var hour))
         {
             time = new TimeSpan(hour, 0, 0);
             return true;
@@ -155,14 +181,34 @@ public sealed partial class DutchTimeParser
         return false;
     }
 
-    private static bool TryParseMinuteWord(string word, out int minutes)
+    /// <summary>
+    /// Parse hour value from either text (een, twee, ...) or number (1, 2, ...)
+    /// </summary>
+    private static bool TryParseHourValue(string text, out int hour)
     {
-        if (int.TryParse(word, out minutes))
+        // Try numeric first (e.g., "10")
+        if (int.TryParse(text, out hour))
+        {
+            return hour >= 1 && hour <= 12;
+        }
+
+        // Try word lookup (e.g., "tien")
+        return HourWords.TryGetValue(text, out hour);
+    }
+
+    /// <summary>
+    /// Parse minute value from either text (vijf, tien, ...) or number (5, 10, ...)
+    /// </summary>
+    private static bool TryParseMinuteValue(string text, out int minutes)
+    {
+        // Try numeric first (e.g., "10")
+        if (int.TryParse(text, out minutes))
         {
             return minutes >= 0 && minutes < 60;
         }
 
-        if (HourWords.TryGetValue(word, out minutes) && minutes <= 30)
+        // Try word lookup (e.g., "vijf" = 5) - only valid for minutes
+        if (HourWords.TryGetValue(text, out minutes) && minutes <= 30)
         {
             return true;
         }
@@ -180,7 +226,8 @@ public sealed partial class DutchTimeParser
     [GeneratedRegex(@"half (\w+)")]
     private static partial Regex HalfRegex();
 
-    [GeneratedRegex(@"(\w+) over (\w+)")]
+    // Matches both "over" and "na" (5 over 10 OR 5 na 10)
+    [GeneratedRegex(@"(\w+) (?:over|na) (\w+)")]
     private static partial Regex MinutesOverRegex();
 
     [GeneratedRegex(@"(\w+) voor (\w+)")]
@@ -189,3 +236,4 @@ public sealed partial class DutchTimeParser
     [GeneratedRegex(@"(\w+) uur")]
     private static partial Regex ExactHourRegex();
 }
+

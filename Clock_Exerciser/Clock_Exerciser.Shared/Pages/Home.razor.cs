@@ -11,6 +11,7 @@ public partial class Home : IAsyncDisposable
     private DotNetObjectReference<Home>? _dotNetReference;
     private string? _deviceMetricsListenerId;
     private bool showResolution = false;
+    private Timer? _clockTimer;
 
     [Inject]
     private ClockExerciseState State { get; set; } = default!;
@@ -25,10 +26,25 @@ public partial class Home : IAsyncDisposable
 
     private string? DeviceMetricsText { get; set; }
 
+    private double CurrentHour { get; set; }
+    private double CurrentMinute { get; set; }
+    private double CurrentSecond { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         State.StateChanged += OnStateChanged;
         await State.InitializeAsync();
+
+        // Initialize clock with current time
+        UpdateClockTime();
+
+        // Start timer to update clock every second
+        _clockTimer = new Timer(
+            callback: _ => _ = UpdateClockAsync(),
+            state: null,
+            dueTime: TimeSpan.FromSeconds(.5),
+            period: TimeSpan.FromSeconds(.5)
+        );
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -50,6 +66,12 @@ public partial class Home : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         State.StateChanged -= OnStateChanged;
+
+        // Dispose timer
+        if (_clockTimer is not null)
+        {
+            await _clockTimer.DisposeAsync();
+        }
 
         if (_deviceMetricsModule is not null && _deviceMetricsListenerId is not null)
         {
@@ -111,6 +133,23 @@ public partial class Home : IAsyncDisposable
     private static string FormatDeviceMetrics(DeviceMetricsSnapshot metrics)
     {
         return $"Viewport {metrics.ViewportWidth:0}×{metrics.ViewportHeight:0} css | Screen {metrics.ScreenWidth}×{metrics.ScreenHeight} css | DPR {metrics.DevicePixelRatio:0.##} | Est. px {metrics.PhysicalWidth}×{metrics.PhysicalHeight} | {metrics.Orientation}";
+    }
+
+    private void UpdateClockTime()
+    {
+        var now = DateTime.Now;
+        // Hour hand: 0-12 range, moving smoothly based on minutes
+        CurrentHour = now.Hour % 12 + now.Minute / 60.0;
+        // Minute hand: Convert 0-59 minutes to 0-12 dial range (divide by 5), smooth movement based on seconds
+        CurrentMinute = now.Minute / 5.0 + now.Second / 300.0;
+        // Second hand: Convert 0-59 seconds to 0-12 dial range (divide by 5)
+        CurrentSecond = now.Second / 5.0;
+    }
+
+    private Task UpdateClockAsync()
+    {
+        UpdateClockTime();
+        return InvokeAsync(StateHasChanged);
     }
 
     public sealed class DeviceMetricsSnapshot

@@ -18,4 +18,8 @@
     <ProjectReference Include="..\Clock_Exerciser.Core\Clock_Exerciser.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\" />
+  </ItemGroup>
+
 </Project>

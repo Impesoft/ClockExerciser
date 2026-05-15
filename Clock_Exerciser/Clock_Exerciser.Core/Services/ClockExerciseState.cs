@@ -137,7 +137,9 @@ public sealed class ClockExerciseState : IAsyncDisposable
 
     public int CurrentSecond => _clockTicker.CurrentSecond;
 
-    public double HourPointerValue => IsClockToTime ? ClockMath.GetHourPointerValue(TargetTime) : UserHourValue;
+    public double HourPointerValue => IsClockToTime 
+        ? ClockMath.GetHourPointerValue(TargetTime) 
+        : UserHourValue + (UserMinuteValue / 60d);
 
     public double MinutePointerValue => IsClockToTime ? ClockMath.GetMinutePointerValue(TargetTime) : ClockMath.ConvertToDialValue(UserMinuteValue);
 

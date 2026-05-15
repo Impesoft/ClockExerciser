@@ -2,6 +2,7 @@
 using Clock_Exerciser.Core.Services;
 using Clock_Exerciser.Services;
 using Microsoft.Extensions.Logging;
+using Plugin.Maui.Audio;
 
 namespace Clock_Exerciser;
 
@@ -19,6 +20,7 @@ public static class MauiProgram
 
         builder.Services.AddMauiBlazorWebView();
         builder.Services.AddTransient<MainPage>();
+        builder.Services.AddSingleton(AudioManager.Current);
         builder.Services.AddSingleton<IPreferenceStore, MauiPreferenceStore>();
         builder.Services.AddSingleton<ICultureStore, AppCultureStore>();
         builder.Services.AddSingleton<ITextProvider, DictionaryTextProvider>();

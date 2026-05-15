@@ -9,7 +9,7 @@
             <p>@State.Text(AppTextKeys.MenuSubtitle)</p>
         </header>
 
-        <AnalogClock HourValue="3" MinuteValue="3" SecondValue="0" Size="180" Compact="true" />
+        <AnalogClock HourValue="@CurrentHour" MinuteValue="@CurrentMinute" SecondValue="@CurrentSecond" Size="180" Compact="true" />
 
         <section class="mode-buttons" aria-label="Game modes">
             <ModeButton Text="@State.Text(AppTextKeys.ModeClockToTime)" Variant="clock-to-time" OnClick="NavigateClockToTime" />
