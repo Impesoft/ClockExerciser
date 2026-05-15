@@ -1,0 +1,21 @@
+<svg width="456" height="456" viewBox="0 0 456 456" xmlns="http://www.w3.org/2000/svg">
+  <!-- Simple clock icon for splash screen -->
+  
+  <!-- Clock face -->
+  <circle cx="228" cy="228" r="180" fill="#FFFFFF"/>
+  
+  <!-- Hour markers at 12, 3, 6, 9 -->
+  <line x1="228" y1="58" x2="228" y2="78" stroke="#2196F3" stroke-width="8" stroke-linecap="round"/>
+  <line x1="382" y1="228" x2="362" y2="228" stroke="#2196F3" stroke-width="8" stroke-linecap="round"/>
+  <line x1="228" y1="398" x2="228" y2="378" stroke="#2196F3" stroke-width="8" stroke-linecap="round"/>
+  <line x1="74" y1="228" x2="94" y2="228" stroke="#2196F3" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Center dot -->
+  <circle cx="228" cy="228" r="12" fill="#2196F3"/>
+  
+  <!-- Hour hand (pointing at 10) -->
+  <line x1="228" y1="228" x2="165" y2="165" stroke="#1b1b1b" stroke-width="12" stroke-linecap="round"/>
+  
+  <!-- Minute hand (pointing at 2) -->
+  <line x1="228" y1="228" x2="310" y2="168" stroke="#333333" stroke-width="10" stroke-linecap="round"/>
+</svg>

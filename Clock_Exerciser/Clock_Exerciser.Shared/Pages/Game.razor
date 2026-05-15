@@ -1,0 +1,62 @@
+@page "/game/{ModeName}"
+
+<PageTitle>@State.Text(AppTextKeys.AppTitle)</PageTitle>
+
+<main class="game-page">
+    <section class="game-stack">
+        <div class="top-row">
+            <button class="menu-link" type="button" @onclick="NavigateToMenu">
+                ‹ @State.Text(AppTextKeys.BackToMenu)
+            </button>
+
+            <LanguageSelector Id="game-language"
+                              CssClass="compact"
+                              AriaLabel="@State.Text(AppTextKeys.LanguageLabel)"
+                              Languages="@State.Languages"
+                              SelectedCultureName="@CurrentLanguageName"
+                              SelectedCultureNameChanged="OnLanguageChangedAsync" />
+        </div>
+
+        <p class="instruction">@State.InstructionText</p>
+
+        <div class="clock-border">
+            <AnalogClock HourValue="@State.HourPointerValue"
+                         MinuteValue="@State.MinutePointerValue"
+                         SecondValue="@State.SecondPointerValue"
+                         Size="320" />
+        </div>
+        <ScoreDisplay ScoreText="@State.ScoreText" />
+        @if (State.IsTimeToClock)
+        {
+            <PromptPanel Label="@State.Text(AppTextKeys.PromptLabel)"
+                         PromptText="@State.PromptText"
+                         PromptDigital="@State.PromptDigital" />
+        }
+
+        @if (State.IsClockToTime)
+        {
+            <AnswerInput Placeholder="@State.Text(AppTextKeys.EntryPlaceholder)"
+                         Value="@State.AnswerText"
+                         ValueChanged="OnAnswerInput" />
+        }
+
+        @if (State.IsTimeToClock)
+        {
+            <ClockSliders HourLabel="@State.Text(AppTextKeys.HourLabel)"
+                          MinuteLabel="@State.Text(AppTextKeys.MinuteLabel)"
+                          HourValue="@State.UserHourValue"
+                          HourValueChanged="OnHourChanged"
+                          MinuteValue="@State.UserMinuteValue"
+                          MinuteValueChanged="OnMinuteChanged" />
+        }
+
+
+        <button class="primary-action" disabled="@(!State.CanSubmit)" @onclick="OnPrimaryActionAsync">
+            @State.PrimaryButtonText
+        </button>
+
+        <ResultMessage Visible="@State.ResultVisible"
+                       Success="@State.ResultSuccess"
+                       Message="@State.ResultMessage" />
+    </section>
+</main>

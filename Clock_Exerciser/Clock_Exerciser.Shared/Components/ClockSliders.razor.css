@@ -1,0 +1,14 @@
+.slider-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.slider-panel label {
+    font-weight: 700;
+}
+
+.slider-panel input[type="range"] {
+    width: 100%;
+    accent-color: #2196f3;
+}

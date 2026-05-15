@@ -1,0 +1,12 @@
+.result-message {
+    text-align: center;
+    font-weight: 700;
+}
+
+.result-message.success {
+    color: #2e7d32;
+}
+
+.result-message.error {
+    color: #c62828;
+}

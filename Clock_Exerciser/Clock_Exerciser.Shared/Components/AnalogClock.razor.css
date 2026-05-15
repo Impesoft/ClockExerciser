@@ -1,0 +1,80 @@
+.analog-clock-shell {
+    width: min(var(--clock-size), 100%);
+    aspect-ratio: 1 / 1;
+    height: auto;
+    max-width: 100%;
+    justify-self: center;
+    align-self: center;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: light-dark(#f5f5f5, #1f1f1f);
+    color: light-dark(#1b1b1b, #f5f5f5);
+    overflow: hidden;
+}
+
+.analog-clock-shell.compact {
+    background: light-dark(#e3f2fd, #1e3a5f);
+    border: 2px solid light-dark(#2196f3, #1976d2);
+}
+
+.analog-clock {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.clock-face {
+    fill: light-dark(#ffffff, #2b2b2b);
+    stroke: light-dark(#e0e0e0, #3a3a3a);
+    stroke-width: 2;
+}
+
+.clock-tick {
+    stroke: light-dark(#2b2b2b, #f0f0f0);
+    stroke-linecap: round;
+}
+
+.clock-tick.major {
+    stroke-width: 2.2;
+}
+
+.clock-tick.minor {
+    stroke-width: 0.8;
+    opacity: 0.65;
+}
+
+.clock-label {
+    fill: light-dark(#1b1b1b, #f5f5f5);
+    font-family: "OpenSansRegular", system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    user-select: none;
+}
+
+.clock-hand {
+    stroke-linecap: round;
+}
+
+.clock-hand.hour {
+    stroke: light-dark(#1b1b1b, #f5f5f5);
+    stroke-width: 5;
+}
+
+.clock-hand.minute {
+    stroke: light-dark(#333333, #e0e0e0);
+    stroke-width: 4;
+}
+
+.clock-hand.second {
+    stroke: #d84315;
+    stroke-width: 1.4;
+}
+
+.clock-knob {
+    fill: light-dark(#1b1b1b, #f5f5f5);
+}
+
+.clock-second-knob {
+    fill: #d84315;
+}

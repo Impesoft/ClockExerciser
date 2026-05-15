@@ -1,0 +1,12 @@
+<section class="language-panel @CssClass">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <label for="@Id">@Label</label>
+    }
+    <select id="@Id" aria-label="@AriaLabel" value="@SelectedCultureName" @onchange="OnChangedAsync">
+        @foreach (var language in Languages)
+        {
+            <option value="@language.CultureName">@language.DisplayName</option>
+        }
+    </select>
+</section>

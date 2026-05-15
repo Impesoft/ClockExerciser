@@ -1,0 +1,26 @@
+<div class="analog-clock-shell @(Compact ? "compact" : string.Empty)" style="--clock-size: @(Size)px;">
+    <svg class="analog-clock" viewBox="0 0 200 200" role="img" aria-label="Analog clock">
+        <circle class="clock-face" cx="100" cy="100" r="94" />
+
+        @foreach (var tick in MinorTicks)
+        {
+            <line class="clock-tick minor" x1="100" y1="9" x2="100" y2="13" transform="rotate(@tick 100 100)" />
+        }
+
+        @foreach (var tick in HourTicks)
+        {
+            <line class="clock-tick major" x1="100" y1="8" x2="100" y2="18" transform="rotate(@tick.Angle 100 100)" />
+        }
+
+        @foreach (var label in Labels)
+        {
+            @GetLabelMarkup(label)
+        }
+
+        <line class="clock-hand hour" x1="100" y1="100" x2="@HourHandEnd.X" y2="@HourHandEnd.Y" />
+        <line class="clock-hand minute" x1="100" y1="100" x2="@MinuteHandEnd.X" y2="@MinuteHandEnd.Y" />
+        <line class="clock-hand second" x1="100" y1="100" x2="@SecondHandEnd.X" y2="@SecondHandEnd.Y" />
+        <circle class="clock-knob" cx="100" cy="100" r="7" />
+        <circle class="clock-second-knob" cx="100" cy="100" r="3" />
+    </svg>
+</div>

@@ -1,0 +1,34 @@
+﻿@page "/"
+
+<PageTitle>@State.Text(AppTextKeys.AppTitle)</PageTitle>
+
+<main class="menu-page">
+    <section class="menu-stack">
+        <header class="menu-header">
+            <h1>@State.Text(AppTextKeys.MenuTitle)</h1>
+            <p>@State.Text(AppTextKeys.MenuSubtitle)</p>
+        </header>
+
+        <AnalogClock HourValue="3" MinuteValue="3" SecondValue="0" Size="180" Compact="true" />
+
+        <section class="mode-buttons" aria-label="Game modes">
+            <ModeButton Text="@State.Text(AppTextKeys.ModeClockToTime)" Variant="clock-to-time" OnClick="NavigateClockToTime" />
+            <ModeButton Text="@State.Text(AppTextKeys.ModeTimeToClock)" Variant="time-to-clock" OnClick="NavigateTimeToClock" />
+            <ModeButton Text="@State.Text(AppTextKeys.ModeRandom)" Variant="random" OnClick="NavigateRandom" />
+        </section>
+
+        <LanguageSelector Id="menu-language"
+                          Label="@State.Text(AppTextKeys.LanguageLabel)"
+                          AriaLabel="@State.Text(AppTextKeys.LanguageLabel)"
+                          Languages="@State.Languages"
+                          SelectedCultureName="@CurrentLanguageName"
+                          SelectedCultureNameChanged="OnLanguageChangedAsync" />
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(DeviceMetricsText))
+    {
+        <aside class="device-metrics-overlay" aria-live="polite">
+            @DeviceMetricsText
+        </aside>
+    }
+</main>

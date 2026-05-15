@@ -1,0 +1,12 @@
+.score-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.score-row span {
+    color: #2e7d32;
+    font-size: 20px;
+    font-weight: 700;
+}

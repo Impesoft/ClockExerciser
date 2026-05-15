@@ -1,0 +1,31 @@
+.language-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.language-panel.compact {
+    align-items: flex-end;
+}
+
+.language-panel label {
+    font-weight: 700;
+}
+
+.language-panel select {
+    width: 200px;
+    min-height: 40px;
+    border: 1px solid light-dark(#c7c7c7, #4a4a4a);
+    border-radius: 8px;
+    padding: 0 12px;
+    color: light-dark(#1b1b1b, #f5f5f5);
+    background: light-dark(#ffffff, #222222);
+    font: inherit;
+}
+
+.language-panel.compact select {
+    width: 160px;
+    min-height: 36px;
+    padding: 0 10px;
+}
