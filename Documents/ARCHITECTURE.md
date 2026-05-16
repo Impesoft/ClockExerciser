@@ -266,6 +266,67 @@ public interface IAudioService
 
 ---
 
+#### `ClockExerciseState.cs` (Blazor)
+**Current Responsibilities:**
+- Centralized game state management for Blazor UI
+- Generate random time challenges
+- Validate user answers (text input or clock hands)
+- Track scoring with correct answers and error count
+- Manage auto-advance countdown timer
+- Provide localized strings
+- Expose pointer values for clock hands
+- Calculate circular differences for validation
+
+**Key Properties:**
+- `CorrectAnswers` - Number of correct answers (persisted)
+- `ErrorCount` - Number of wrong answers (persisted) ?
+- `ScoreText` - Formatted score display ("?? 10/3") ?
+- `Countdown` - Current countdown value (3, 2, 1, 0) ?
+- `IsCountdownActive` - Whether countdown is running ?
+- `PrimaryButtonText` - Dynamic button text with countdown ?
+
+**Score & Countdown Features ?:**
+- **Score Format**: Displays as "correct/errors" (e.g., "?? 10/3")
+- **Error Tracking**: Increments on wrong answers, persisted via `IPreferenceStore`
+- **Auto-Advance**: After correct answer, 3-second countdown starts automatically
+- **Countdown Display**: Button text updates to show countdown: "Next Challenge (3)", "Next Challenge (2)", etc.
+- **Auto-Proceed**: When countdown reaches 0, automatically generates next challenge
+- **Manual Skip**: User can click button anytime to skip countdown and proceed immediately
+- **Timer Cleanup**: Countdown properly disposed on challenge change and component disposal
+
+**Implementation Details:**
+```csharp
+// Countdown timer using System.Timers.Timer
+private System.Timers.Timer? _countdownTimer;
+private int _countdown;
+
+private void StartCountdown()
+{
+    _countdown = 3;
+    _countdownTimer = new System.Timers.Timer(1000);
+    _countdownTimer.Elapsed += OnCountdownTick;
+    _countdownTimer.Start();
+}
+
+private void OnCountdownTick(object? sender, ElapsedEventArgs e)
+{
+    _countdown--;
+    if (_countdown <= 0)
+    {
+        StopCountdown();
+        GenerateNewChallenge();
+    }
+    NotifyStateChanged();
+}
+```
+
+**Persistence:**
+- `CorrectAnswers` persisted via key "CorrectAnswers"
+- `ErrorCount` persisted via key "ErrorCount" ?
+- Both restored on app initialization
+
+---
+
 ### 6. Helpers
 
 #### `ServiceHelper.cs`

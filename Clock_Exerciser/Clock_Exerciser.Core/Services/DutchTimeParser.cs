@@ -42,6 +42,21 @@ public sealed partial class DutchTimeParser
             return kwartVoorTime;
         }
 
+        // IMPORTANT: Check "X na/voor half Y" BEFORE plain "half Y"
+        // Otherwise "half (\w+)" will match first!
+
+        // Check for "X na half Y" (e.g., "5 na half 10" = 9:35)
+        if (TryParseMinutesNaHalf(input, out var naHalfTime))
+        {
+            return naHalfTime;
+        }
+
+        // Check for "X voor half Y" (e.g., "5 voor half negen" = 8:25)
+        if (TryParseMinutesVoorHalf(input, out var voorHalfTime))
+        {
+            return voorHalfTime;
+        }
+
         if (TryParseHalf(input, out var halfTime))
         {
             return halfTime;
@@ -123,6 +138,64 @@ public sealed partial class DutchTimeParser
             var actualHour = hour == 1 ? 12 : hour - 1;
             time = new TimeSpan(actualHour, 30, 0);
             return true;
+        }
+
+        time = default;
+        return false;
+    }
+
+    private static bool TryParseMinutesNaHalf(string input, out TimeSpan time)
+    {
+        var match = MinutesNaHalfRegex().Match(input);
+        if (match.Success)
+        {
+            var minuteText = match.Groups[1].Value;
+            var hourText = match.Groups[2].Value;
+
+            if (TryParseMinuteValue(minuteText, out var minutes) && TryParseHourValue(hourText, out var hour))
+            {
+                // Calculate the "half hour" (30 minutes before the target hour)
+                var actualHour = hour == 1 ? 12 : hour - 1;
+                var totalMinutes = 30 + minutes;
+
+                if (totalMinutes >= 60)
+                {
+                    actualHour = actualHour == 12 ? 1 : actualHour + 1;
+                    totalMinutes -= 60;
+                }
+
+                time = new TimeSpan(actualHour, totalMinutes, 0);
+                return true;
+            }
+        }
+
+        time = default;
+        return false;
+    }
+
+    private static bool TryParseMinutesVoorHalf(string input, out TimeSpan time)
+    {
+        var match = MinutesVoorHalfRegex().Match(input);
+        if (match.Success)
+        {
+            var minuteText = match.Groups[1].Value;
+            var hourText = match.Groups[2].Value;
+
+            if (TryParseMinuteValue(minuteText, out var minutes) && TryParseHourValue(hourText, out var hour))
+            {
+                // Calculate the "half hour" (30 minutes before the target hour)
+                var actualHour = hour == 1 ? 12 : hour - 1;
+                var totalMinutes = 30 - minutes;
+
+                if (totalMinutes < 0)
+                {
+                    actualHour = actualHour == 1 ? 12 : actualHour - 1;
+                    totalMinutes += 60;
+                }
+
+                time = new TimeSpan(actualHour, totalMinutes, 0);
+                return true;
+            }
         }
 
         time = default;
@@ -225,6 +298,14 @@ public sealed partial class DutchTimeParser
 
     [GeneratedRegex(@"half (\w+)")]
     private static partial Regex HalfRegex();
+
+    // Matches "X na half Y" (e.g., "5 na half 10")
+    [GeneratedRegex(@"(\w+) (?:na|over) half (\w+)")]
+    private static partial Regex MinutesNaHalfRegex();
+
+    // Matches "X voor half Y" (e.g., "5 voor half negen")
+    [GeneratedRegex(@"(\w+) voor half (\w+)")]
+    private static partial Regex MinutesVoorHalfRegex();
 
     // Matches both "over" and "na" (5 over 10 OR 5 na 10)
     [GeneratedRegex(@"(\w+) (?:over|na) (\w+)")]

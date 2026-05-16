@@ -197,20 +197,37 @@ An educational .NET MAUI application to help users learn to read analog clocks a
 
 ---
 
-## Phase 5: UI/UX Improvements ??
+## Phase 5: UI/UX Improvements ?️?
 
 ### 5.1 Menu Page Design
 - [ ] Use gradients or playful colors
 - [ ] Add animations (e.g., clock hands spinning on load)
 - [ ] Accessibility: ensure large touch targets, readable fonts
 
-### 5.2 Game Page Enhancements
+### 5.2 Game Page Enhancements ?
 - [ ] Add visual feedback animations:
   - Green checkmark animation on correct answer
   - Red shake animation on incorrect answer
 - [ ] Combine with audio feedback
-- [ ] Add score tracking (optional)
+- [x] **Add score tracking with error counter**
+  - Score displays as "correct/errors" format (e.g., "🏆 10/3")
+  - Error count persisted across sessions
+  - Both correct answers and errors tracked separately
+- [x] **Auto-advance countdown timer**
+  - 3-second countdown appears on "Next Challenge" button after correct answer
+  - Button text shows countdown: "Next Challenge (3)", "Next Challenge (2)", etc.
+  - Automatically proceeds to next challenge when countdown reaches 0
+  - User can manually click button to skip countdown
 - [ ] Timer mode (optional challenge)
+
+**Implementation Notes (Score & Countdown):**
+- Added `ErrorCount` property to `ClockExerciseState`
+- Errors persisted via `IPreferenceStore` (key: "ErrorCount")
+- `ScoreFormatter.Format()` updated to accept both correct and error counts
+- Countdown uses `System.Timers.Timer` with 1-second intervals
+- Countdown starts automatically after correct answer
+- `PrimaryButtonText` dynamically updates to show countdown
+- Countdown properly disposed in `DisposeAsync()` and when starting new challenges
 
 ### 5.3 Settings Page (Optional)
 - [ ] Sound on/off toggle

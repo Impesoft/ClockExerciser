@@ -3,6 +3,11 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# Android signing files - NEVER commit these!
+*.keystore
+*.jks
+signing.props
+
 # User-specific files
 *.rsuser
 *.suo

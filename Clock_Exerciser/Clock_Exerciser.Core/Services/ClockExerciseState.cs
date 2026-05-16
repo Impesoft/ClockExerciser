@@ -7,6 +7,7 @@ namespace Clock_Exerciser.Core.Services;
 public sealed class ClockExerciseState : IAsyncDisposable
 {
     private const string CorrectAnswersPreferenceKey = "CorrectAnswers";
+    private const string ErrorCountPreferenceKey = "ErrorCount";
     private readonly ChallengeGenerator _challengeGenerator;
     private readonly UserTimeParser _userTimeParser;
     private readonly AnswerValidator _answerValidator;
@@ -25,8 +26,11 @@ public sealed class ClockExerciseState : IAsyncDisposable
     private double _userHourValue;
     private double _userMinuteValue;
     private int _correctAnswers;
+    private int _errorCount;
     private bool _answerChecked;
     private bool _initialized;
+    private System.Timers.Timer? _countdownTimer;
+    private int _countdown;
 
     public ClockExerciseState(
         ChallengeGenerator challengeGenerator,
@@ -99,11 +103,27 @@ public sealed class ClockExerciseState : IAsyncDisposable
 
     public int CorrectAnswers => _correctAnswers;
 
-    public string ScoreText => ScoreFormatter.Format(CorrectAnswers);
+    public int ErrorCount => _errorCount;
 
-    public string PrimaryButtonText => _answerChecked && _resultSuccess
-        ? Text(AppTextKeys.NextChallenge)
-        : Text(AppTextKeys.SubmitAnswer);
+    public string ScoreText => ScoreFormatter.Format(CorrectAnswers, ErrorCount);
+
+    public int Countdown => _countdown;
+
+    public bool IsCountdownActive => _countdown > 0;
+
+    public string PrimaryButtonText
+    {
+        get
+        {
+            if (_answerChecked && _resultSuccess)
+            {
+                return IsCountdownActive 
+                    ? $"{Text(AppTextKeys.NextChallenge)} ({_countdown})" 
+                    : Text(AppTextKeys.NextChallenge);
+            }
+            return Text(AppTextKeys.SubmitAnswer);
+        }
+    }
 
     public double UserHourValue
     {
@@ -160,6 +180,7 @@ public sealed class ClockExerciseState : IAsyncDisposable
 
         _initialized = true;
         _correctAnswers = await _preferenceStore.GetIntAsync(CorrectAnswersPreferenceKey, 0, cancellationToken);
+        _errorCount = await _preferenceStore.GetIntAsync(ErrorCountPreferenceKey, 0, cancellationToken);
         GenerateNewChallenge(GameMode.ClockToTime);
     }
 
@@ -170,6 +191,8 @@ public sealed class ClockExerciseState : IAsyncDisposable
 
     public void GenerateNewChallenge(GameMode? requestedMode = null)
     {
+        StopCountdown();
+
         if (requestedMode.HasValue)
         {
             _requestedMode = requestedMode.Value;
@@ -183,6 +206,7 @@ public sealed class ClockExerciseState : IAsyncDisposable
         _resultSuccess = false;
         _resultMessage = string.Empty;
         _answerChecked = false;
+        _countdown = 0;
 
         if (IsTimeToClock)
         {
@@ -204,6 +228,40 @@ public sealed class ClockExerciseState : IAsyncDisposable
         await CheckAnswerAsync(cancellationToken);
     }
 
+    public void StopCountdown()
+    {
+        if (_countdownTimer is not null)
+        {
+            _countdownTimer.Stop();
+            _countdownTimer.Elapsed -= OnCountdownTick;
+            _countdownTimer.Dispose();
+            _countdownTimer = null;
+        }
+        _countdown = 0;
+    }
+
+    private void StartCountdown()
+    {
+        _countdown = 3;
+        _countdownTimer = new System.Timers.Timer(1000);
+        _countdownTimer.Elapsed += OnCountdownTick;
+        _countdownTimer.Start();
+        NotifyStateChanged();
+    }
+
+    private void OnCountdownTick(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        _countdown--;
+
+        if (_countdown <= 0)
+        {
+            StopCountdown();
+            GenerateNewChallenge();
+        }
+
+        NotifyStateChanged();
+    }
+
     public void StartClock() => _clockTicker.Start();
 
     public void StopClock() => _clockTicker.Stop();
@@ -216,6 +274,7 @@ public sealed class ClockExerciseState : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        StopCountdown();
         _cultureStore.CultureChanged -= OnCultureChanged;
         _clockTicker.SecondChanged -= OnSecondChanged;
         await _clockTicker.DisposeAsync();
@@ -255,9 +314,12 @@ public sealed class ClockExerciseState : IAsyncDisposable
             _correctAnswers++;
             await _preferenceStore.SetIntAsync(CorrectAnswersPreferenceKey, _correctAnswers, cancellationToken);
             await _audioFeedbackService.PlaySuccessSoundAsync(cancellationToken);
+            StartCountdown();
         }
         else
         {
+            _errorCount++;
+            await _preferenceStore.SetIntAsync(ErrorCountPreferenceKey, _errorCount, cancellationToken);
             await _audioFeedbackService.PlayErrorSoundAsync(cancellationToken);
         }
     }

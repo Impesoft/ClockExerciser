@@ -1,18 +1,25 @@
 using Clock_Exerciser.Core.Models;
 using Clock_Exerciser.Core.Services;
+using Clock_Exerciser.Shared.Components;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
 namespace Clock_Exerciser.Shared.Pages;
 
 public partial class Game : IDisposable
 {
     private GameMode? _loadedMode;
+    private AnswerInput? answerInput;
+    private ElementReference submitButton;
 
     [Inject]
     private ClockExerciseState State { get; set; } = default!;
 
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
 
     [Parameter]
     public string? ModeName { get; set; }
@@ -44,6 +51,16 @@ public partial class Game : IDisposable
 
     private async Task OnPrimaryActionAsync()
     {
+        // Focus the button to dismiss keyboard (Android will auto-hide keyboard when input loses focus)
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval", "arguments[0].focus()", submitButton);
+        }
+        catch
+        {
+            // Silently fail - not critical
+        }
+
         await State.ExecutePrimaryActionAsync();
     }
 

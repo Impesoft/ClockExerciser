@@ -35,9 +35,11 @@
 
         @if (State.IsClockToTime)
         {
-            <AnswerInput Placeholder="@State.Text(AppTextKeys.EntryPlaceholder)"
+            <AnswerInput @ref="answerInput"
+                         Placeholder="@State.Text(AppTextKeys.EntryPlaceholder)"
                          Value="@State.AnswerText"
-                         ValueChanged="OnAnswerInput" />
+                         ValueChanged="OnAnswerInput"
+                         OnEnterKeyPressed="OnPrimaryActionAsync" />
         }
 
         @if (State.IsTimeToClock)
@@ -50,8 +52,7 @@
                           MinuteValueChanged="OnMinuteChanged" />
         }
 
-
-        <button class="primary-action" disabled="@(!State.CanSubmit)" @onclick="OnPrimaryActionAsync">
+        <button @ref="submitButton" class="primary-action" disabled="@(!State.CanSubmit)" @onclick="OnPrimaryActionAsync">
             @State.PrimaryButtonText
         </button>
 

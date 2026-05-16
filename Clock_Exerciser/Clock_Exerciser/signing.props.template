@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  This is a TEMPLATE file. To use it:
+  1. Copy this file and rename it to "signing.props" (remove .template)
+  2. Fill in your actual keystore path and passwords
+  3. The signing.props file is gitignored and will never be committed
+
+  To generate a keystore, run:
+  keytool -genkey -v -keystore clockexerciser-release.keystore -alias clockexerciser -keyalg RSA -keysize 2048 -validity 10000
+-->
+<Project>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android|AnyCPU'">
+	<!-- Android Signing Configuration -->
+	<AndroidKeyStore>true</AndroidKeyStore>
+
+	<!-- Path to your keystore file (can be relative to this file or absolute) -->
+	<AndroidSigningKeyStore>clockexerciser-release.keystore</AndroidSigningKeyStore>
+
+	<!-- Alias you used when creating the keystore -->
+	<AndroidSigningKeyAlias>clockexerciser</AndroidSigningKeyAlias>
+
+	<!-- Password for the key (the one you entered for "key password") -->
+	<AndroidSigningKeyPass>YOUR_KEY_PASSWORD_HERE</AndroidSigningKeyPass>
+
+	<!-- Password for the keystore (the one you entered for "keystore password") -->
+	<AndroidSigningStorePass>YOUR_STORE_PASSWORD_HERE</AndroidSigningStorePass>
+  </PropertyGroup>
+</Project>

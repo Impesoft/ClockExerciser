@@ -1,4 +1,10 @@
-<input class="answer-input"
+<input @ref="inputElement"
+       class="answer-input"
+       type="text"
+       inputmode="text"
+       enterkeyhint="done"
+       autocomplete="off"
        placeholder="@Placeholder"
        value="@Value"
-       @oninput="OnInput" />
+       @oninput="OnInput"
+       @onkeydown="OnKeyDown" />

@@ -8,4 +8,5 @@
   <Project Path="Clock_Exerciser/Clock_Exerciser/Clock_Exerciser.csproj">
     <Deploy Solution="Debug|*" />
   </Project>
+  <Project Path="Clokc_Exerciser.Tests/Clock_Exerciser.Tests.csproj" Id="c3e32132-7fc9-4c50-95f8-bbc5c85194ae" />
 </Solution>
