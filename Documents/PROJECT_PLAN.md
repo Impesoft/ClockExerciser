@@ -310,6 +310,32 @@ An educational .NET MAUI application to help users learn to read analog clocks a
 
 ---
 
+## Phase 8: Web PWA & Offline Capability ??
+
+### 8.1 Installable Web App
+- [x] Add web app manifest to `Clock_Exerciser.Web`
+- [x] Add install icons and Apple touch icons
+- [x] Register a service worker for installability
+
+### 8.2 Offline-Capable Web Runtime
+- [x] Create `Clock_Exerciser.Web.Client` Blazor WebAssembly PWA project
+- [x] Reference shared `Clock_Exerciser.Core` and `Clock_Exerciser.Shared` from the client
+- [x] Add browser local-storage-backed preference persistence
+- [x] Add browser audio adapter using shared static assets
+- [x] Refactor `Clock_Exerciser.Web` to host and serve the WebAssembly client
+- [x] Switch the WebAssembly client to the shared Razor routes
+- [ ] Publish and manually validate true offline behavior in the browser
+
+**Implementation Notes (Web Offline Work):**
+- `feature/offline-pwa` introduces a dedicated `Clock_Exerciser.Web.Client` project for browser execution.
+- `Clock_Exerciser.Web` now acts as the ASP.NET Core host for the WebAssembly client instead of depending on interactive server rendering for the app UI.
+- Browser persistence uses local storage so score, error count, and selected culture survive reloads and offline usage.
+- Shared Razor pages remain the single UI source for MAUI Hybrid and web, which keeps the Android app path intact.
+- Fixed the client boot script in `Clock_Exerciser.Web.Client/wwwroot/index.html` to use `_framework/blazor.webassembly.js`, which resolves the published loading-screen hang caused by an unprocessed placeholder URL.
+- Explicitly excluded `wwwroot/sample-data/**` from the WebAssembly client project so the default template `weather.json` sample asset can stay deleted without breaking generated service-worker/static-web-assets manifests.
+
+---
+
 ## Current Architecture
 
 ```

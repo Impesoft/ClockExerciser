@@ -42,6 +42,17 @@ This document describes the technical architecture of the Clock Exerciser applic
 - Service registration
 - Platform-specific initialization
 
+### Web Runtime Split ?
+
+The solution now uses a split web architecture:
+
+- `Clock_Exerciser.Web` is the **ASP.NET Core host** that serves static assets and falls back to the client app entry point.
+- `Clock_Exerciser.Web.Client` is the **Blazor WebAssembly PWA client** that runs the UI and game logic in the browser.
+- `Clock_Exerciser.Shared` remains the shared Razor UI library used by both the WebAssembly client and the MAUI `BlazorWebView` host.
+- `Clock_Exerciser.Core` remains the shared application logic layer for challenge generation, parsing, validation, scoring, and culture handling.
+
+This preserves MAUI Android compatibility because the MAUI app continues to depend on `Core` and `Shared` directly and doesn't rely on the web host project.
+
 ---
 
 ### 2. Pages (Views)
@@ -174,6 +185,38 @@ public enum GameMode
 ---
 
 ### 5. Services
+
+#### `BrowserPreferenceStore.cs` ? **NEW**
+**Responsibilities:**
+- Persist preference values in browser `localStorage`
+- Provide the `IPreferenceStore` abstraction for the WebAssembly client
+- Restore score, error count, and selected culture after reload or offline startup
+
+**Implementation:**
+- Uses JS module interop to call `browserStorage.js`
+- Stores integers using invariant-culture string serialization
+- Registered as the `IPreferenceStore` implementation in `Clock_Exerciser.Web.Client`
+
+#### `Clock_Exerciser.Web.Client/wwwroot/index.html`
+**Responsibilities:**
+- Provide the WebAssembly browser boot page for the hosted client
+- Register the PWA service worker outside localhost
+- Load shared styles and the Blazor WebAssembly runtime script
+
+**Implementation Notes:**
+- Uses the standard `_framework/blazor.webassembly.js` boot script path so published output does not leave an unresolved placeholder in the browser.
+- Does not emit an empty preload link, which avoids the browser console warning about an invalid `href`.
+- Explicitly excludes `wwwroot/sample-data/**` from the client project so unused template sample assets do not participate in generated service-worker/static-web-assets manifests.
+
+#### `BrowserAudioFeedbackService.cs` ? **NEW**
+**Responsibilities:**
+- Play browser audio feedback for correct and incorrect answers
+- Reuse shared static assets from `Clock_Exerciser.Shared/wwwroot`
+
+**Implementation:**
+- Imports `/_content/Clock_Exerciser.Shared/audioPlayer.js`
+- Plays `/_content/Clock_Exerciser.Shared/sounds/success.mp3` and `error.mp3`
+- Registered as the `IAudioFeedbackService` implementation in the WebAssembly client
 
 #### `LocalizationService.cs` ?
 **Current Responsibilities:**
@@ -443,6 +486,21 @@ public void ApplyQueryAttributes(IDictionary<string, object> query)
 
 ## Dependency Injection Setup
 
+### `Clock_Exerciser.Web.Client/Program.cs` ?
+```csharp
+builder.Services.AddScoped<BrowserPreferenceStore>();
+builder.Services.AddScoped<IPreferenceStore>(sp => sp.GetRequiredService<BrowserPreferenceStore>());
+builder.Services.AddScoped<AppCultureStore>();
+builder.Services.AddScoped<ICultureStore>(sp => sp.GetRequiredService<AppCultureStore>());
+builder.Services.AddScoped<ITextProvider, DictionaryTextProvider>();
+builder.Services.AddScoped<IAudioFeedbackService, BrowserAudioFeedbackService>();
+builder.Services.AddScoped<ClockExerciseState>();
+```
+
+**Notes:**
+- The WebAssembly client initializes `AppCultureStore` on startup so persisted culture is restored before UI rendering.
+- Service lifetimes match browser-session behavior and don't affect MAUI registrations.
+
 ### `MauiProgram.cs` ?
 ```csharp
 builder.Services.AddSingleton(AudioManager.Current);
@@ -472,6 +530,20 @@ ClockExerciser/
 ??? App.xaml / App.xaml.cs
 ??? AppShell.xaml / AppShell.xaml.cs
 ??? MauiProgram.cs
+??? Clock_Exerciser.Web/
+?   ??? Program.cs (ASP.NET Core host for the WASM client)
+?   ??? Clock_Exerciser.Web.csproj
+??? Clock_Exerciser.Web.Client/
+?   ??? Program.cs (Blazor WebAssembly entry point)
+?   ??? App.razor
+?   ??? Services/
+?   ?   ??? BrowserPreferenceStore.cs
+?   ?   ??? BrowserAudioFeedbackService.cs
+?   ??? wwwroot/
+?       ??? index.html
+?       ??? manifest.webmanifest
+?       ??? service-worker.js
+?       ??? service-worker.published.js
 ??? Documents/
 ?   ??? PROJECT_PLAN.md
 ?   ??? ARCHITECTURE.md (this file)

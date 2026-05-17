@@ -52,7 +52,7 @@
                           MinuteValueChanged="OnMinuteChanged" />
         }
 
-        <button @ref="submitButton" class="primary-action" disabled="@(!State.CanSubmit)" @onclick="OnPrimaryActionAsync">
+        <button class="primary-action" disabled="@(!State.CanSubmit)" @onclick="OnPrimaryActionAsync">
             @State.PrimaryButtonText
         </button>
 

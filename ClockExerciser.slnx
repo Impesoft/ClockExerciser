@@ -4,6 +4,9 @@
   </Project>
   <Project Path="Clock_Exerciser/Clock_Exerciser.Core/Clock_Exerciser.Core.csproj" />
   <Project Path="Clock_Exerciser/Clock_Exerciser.Shared/Clock_Exerciser.Shared.csproj" />
+  <Project Path="Clock_Exerciser/Clock_Exerciser.Web.Client/Clock_Exerciser.Web.Client.csproj">
+    <Build Solution="Debug|*" Project="false" />
+  </Project>
   <Project Path="Clock_Exerciser/Clock_Exerciser.Web/Clock_Exerciser.Web.csproj" />
   <Project Path="Clock_Exerciser/Clock_Exerciser/Clock_Exerciser.csproj">
     <Deploy Solution="Debug|*" />

@@ -1,250 +1,202 @@
-# GitHub Copilot Instructions for Clock Exerciser Project
+# GitHub Copilot Instructions for Clock Exerciser
 
 ## Project Context
-This is a .NET MAUI educational application called **Clock Exerciser** that helps users learn to read analog clocks and convert between analog and digital time formats. The app supports English and Dutch languages.
+Clock Exerciser is a .NET 10 solution with:
+- a **.NET MAUI app** for Android, iOS, Windows, and MacCatalyst
+- a **hosted Blazor WebAssembly PWA** for browser/offline play
+- shared UI and logic used across both app surfaces
+
+The product helps users learn to read analog clocks and convert between analog and digital time formats in English and Dutch.
 
 ---
 
-## ?? **IMPORTANT: Always Read Project Documentation First**
+## Start With the Right Level of Context
 
-**Before starting ANY task**, read all files in the `Documents/` folder:
-- `Documents/PROJECT_PLAN.md` - Current project plan, phases, and tasks
-- `Documents/ARCHITECTURE.md` - Technical architecture and design decisions
-- Any other `.md` files in the `Documents/` folder
+Do **not** treat the `Documents/` folder as mandatory reading for every tiny fix.
 
-This ensures you:
-- ? Understand what has already been built
-- ? Don't duplicate existing work
-- ? Follow established patterns and conventions
-- ? Continue from the correct project state
-- ? Maintain consistency across the codebase
+### Review `Documents/*.md` first when:
+- adding a new feature
+- changing architecture or project structure
+- changing navigation, platform behavior, deployment, or publish flow
+- updating long-lived patterns, services, or shared components
+- the task explicitly mentions planning, roadmap, or architecture
 
-**WHEN COMPLETING TASKS:**
-1. **Update `Documents/PROJECT_PLAN.md`**: Mark tasks as complete with `[x]` and add implementation notes
-2. **Update `Documents/ARCHITECTURE.md`**: Document new components, patterns, and architectural decisions
-3. Use `#file:'Documents/ARCHITECTURE.md'` reference when describing technical architecture
-4. Use `#file:'Documents/PROJECT_PLAN.md'` reference when discussing project status or planning
+### Skip full doc review for small, local fixes when:
+- the change is isolated to one or two files
+- the task is a straightforward bug fix or cleanup
+- the code clearly shows the current behavior already
+
+### Important rule
+- **Code is the source of truth.**
+- Use docs as guidance, not as unquestionable truth.
+- If docs and code differ, follow the code and update the docs only if the change is important enough to preserve.
+
+### Documentation maintenance
+Update `Documents/PROJECT_PLAN.md` and/or `Documents/ARCHITECTURE.md` only when the change affects:
+- roadmap or task tracking
+- architecture or runtime composition
+- deployment or publish behavior
+- reusable patterns other contributors should know
+
+Do not update project docs for every minor bug fix.
+
+---
+
+## Current Solution Shape
+
+Key projects:
+- `Clock_Exerciser` - .NET MAUI app host
+- `Clock_Exerciser.Web` - ASP.NET Core host for the Blazor WebAssembly client
+- `Clock_Exerciser.Web.Client` - Blazor WebAssembly PWA client
+- `Clock_Exerciser.Shared` - shared Razor components, pages, and static web assets
+- `Clock_Exerciser.Core` - shared application logic and abstractions
+- `Clock_Exerciser.Tests` - tests
+
+### Current architecture guidance
+- Prefer keeping business logic in `Clock_Exerciser.Core`
+- Prefer keeping reusable UI in `Clock_Exerciser.Shared`
+- Keep platform-specific host behavior in the MAUI or web host projects
+- Avoid duplicating logic between MAUI and web unless platform constraints require it
 
 ---
 
 ## Technology Stack
-- **.NET 10** (MAUI)
-- **C# 14.0**
-- **Platforms**: Android, iOS, Windows, MacCatalyst
-- **UI Framework**: .NET MAUI with Syncfusion.Maui.Gauges for clock visualization
+- **.NET 10**
+- **C# 14**
+- **.NET MAUI** for native app hosting
+- **Blazor WebAssembly + ASP.NET Core host** for web/PWA hosting
+- **Syncfusion.Maui.Gauges** for the native analog clock UI
 
 ---
 
 ## Code Style & Conventions
 
-### General Guidelines
-- Follow C# naming conventions (PascalCase for types/methods, camelCase for fields)
-- Use `var` for local variables when type is obvious
-- Prefer expression-bodied members for simple properties/methods
-- Use nullable reference types (`string?`) where appropriate
-- Keep methods small and focused (Single Responsibility Principle)
+### General C#
+- Follow standard C# naming conventions
+- Use `var` when the type is obvious
+- Use nullable reference types correctly
+- Keep methods focused and small
+- Prefer existing abstractions before adding new ones
 
-### XAML Guidelines
-- Use data binding instead of code-behind manipulation
-- Prefer `{Binding}` syntax (already using MVVM)
-- Use `{StaticResource}` for reusable styles
-- Keep XAML clean: extract complex layouts to separate components if needed
+### MAUI/XAML
+- Prefer binding over code-behind manipulation
+- Use reusable styles/resources where appropriate
+- Keep page-specific behavior out of code-behind unless platform/UI lifecycle requires it
 
-### Architecture Patterns
-- **MVVM**: All pages should have a corresponding ViewModel
-- **Dependency Injection**: Use built-in .NET DI container
-- **Services**: Business logic goes in service classes (not ViewModels)
-- **Navigation**: Use Shell-based navigation with routes
+### Blazor
+- Prefer shared Razor components/pages in `Clock_Exerciser.Shared`
+- Keep browser-only interop inside the web client or web host
+- Use root-absolute static asset paths for hosted WebAssembly scenarios when relative paths may break on routed pages
 
----
-
-## File Organization
-
-```
-ClockExerciser/
-??? Documents/           # ?? READ FIRST - Project documentation
-??? Pages/              # XAML views (to be created)
-??? ViewModels/         # ViewModels (MVVM pattern)
-??? Models/             # Data models and enums
-??? Services/           # Business logic and utilities
-??? Helpers/            # Static utility classes
-??? Resources/
-?   ??? Images/        # App icons, splash screens
-?   ??? Raw/           # Audio files, assets
-?   ??? Strings/       # Localization resources
-```
+### Dependency Injection
+- Register services in the appropriate host:
+  - `MauiProgram.cs` for MAUI
+  - `Program.cs` for Blazor WebAssembly client
+  - `Program.cs` for ASP.NET Core host if host-only behavior is needed
 
 ---
 
 ## Localization
-
-- Use `LocalizationService` for all user-facing strings
-- Add keys to `Resources/Strings/AppResources.resx` (English)
-- Add translations to `Resources/Strings/AppResources.nl-NL.resx` (Dutch)
-- **Never hardcode UI strings in XAML or C#**
-
-Example:
-```csharp
-var title = _localizationService.GetString("AppTitle");
-```
-
-XAML binding:
-```xaml
-<Label Text="{Binding AppTitle}" />
-```
+- Do not hardcode user-facing strings
+- Reuse the existing localization/text abstractions already present in the solution
+- When adding new strings, update both English and Dutch resources
+- Verify both languages when changing prompts, labels, or result messages
 
 ---
 
-## Clock-Specific Logic
+## Clock and Game Logic
 
-### Clock Hand Scaling
-- Hour hand: Direct 0-12 value
-- Minute/Second hands: Use `ConvertToDialValue(rawValue)` which divides by 5
-- The gauge axis is 0-12 with 4 minor ticks per interval (60 total subdivisions)
+### Clock hand scaling
+- Hour hand uses direct 0-12 values
+- Minute/second hands must use the existing dial-scaling logic
+- Do not pass raw 0-59 values to a 0-12 dial without conversion
 
-### Time Validation
-- Use `MatchesTime()` for comparing times with tolerance
-- Use `CircularDifference()` for angular comparisons (handles wrap-around)
-- Account for 12/24-hour equivalence (3:15 PM = 15:15)
+### Time validation
+- Preserve wrap-around and 12/24-hour equivalence behavior
+- Be careful with tolerance logic and circular comparisons
 
-### Avoid These Mistakes
-- ? Don't use `TimeSpan.ToString("HH:mm")` ? Use `"hh:mm"` instead
-- ? Don't create multiple gauge axes for hours/minutes ? Use single 0-12 axis
-- ? Don't pass raw 0-59 values to minute/second pointers ? Scale them first
-
----
-
-## Testing Requirements
-
-When adding new features:
-1. Write unit tests for business logic (parsers, validators, calculations)
-2. Manual test on at least one platform (Windows/Android)
-3. Verify localization works in both English and Dutch
-4. Test navigation flow (if applicable)
+### Natural language parsing
+- Support both English and Dutch patterns already established in the codebase
+- Dutch `half vijf` means `4:30`, not `5:30`
+- Return nullable parse results on failure where existing parser contracts expect that
 
 ---
 
-## Audio Integration
-
-When implementing audio:
-- Use async methods (`Task PlaySuccessSound()`)
-- Don't block the UI thread
-- Provide an option to mute (future settings page)
-- Use platform-specific audio APIs or MediaElement
+## Audio Guidance
+- Keep audio playback async
+- Do not block UI interaction on audio
+- Respect the current platform split:
+  - MAUI uses the native/mobile audio implementation
+  - Web/PWA uses browser audio via JS interop
+- For hosted WebAssembly, ensure static asset paths are valid from routed pages and in published output
 
 ---
 
-## Natural Language Parsing
+## PWA / Web Publish Guidance
+- `Clock_Exerciser.Web` hosts the published WebAssembly client
+- `Clock_Exerciser.Web.Client/wwwroot/index.html` controls browser boot behavior
+- Service worker and static web asset behavior matter for publish/offline fixes
+- Be careful with relative asset paths, placeholder-based script URLs, and service-worker cache behavior
+- If changing publish/runtime behavior, validate both build output and browser behavior
 
-When implementing time parsers:
-- Support both exact phrases and flexible input
-- Handle ambiguity (e.g., Dutch "vijf" = 5 or "five minutes")
-- Return `TimeSpan?` (null on parse failure)
-- Test with edge cases (midnight, noon, "half past" logic)
+---
 
-### Dutch Time Logic
-- "half [uur]" = 30 minutes **before** the hour (e.g., "half vijf" = 4:30, not 5:30)
-- This is different from English "half past"
+## Testing Expectations
+
+When adding or changing behavior:
+- run relevant tests when they exist
+- build the solution or the affected projects
+- validate the touched runtime when practical:
+  - MAUI for native-only changes
+  - web host/client for browser or publish changes
+
+For new business logic, prefer adding tests in `Clock_Exerciser.Tests`.
 
 ---
 
 ## Common Tasks
 
-### Adding a New Page
-1. Create `Pages/YourPage.xaml` and `Pages/YourPage.xaml.cs`
-2. Create `ViewModels/YourViewModel.cs`
-3. Register both in `MauiProgram.cs`:
-   ```csharp
-   builder.Services.AddTransient<YourPage>();
-   builder.Services.AddTransient<YourViewModel>();
-   ```
-4. Add route in `AppShell.xaml`:
-   ```xml
-   <ShellContent Route="yourpage" ContentTemplate="{DataTemplate pages:YourPage}" />
-   ```
+### Add a service
+1. Put shared abstractions/logic in the appropriate shared project
+2. Add platform-specific implementations only where needed
+3. Register the implementation in the correct host project
 
-### Adding a New Service
-1. Create interface `Services/IYourService.cs`
-2. Create implementation `Services/YourService.cs`
-3. Register in `MauiProgram.cs`:
-   ```csharp
-   builder.Services.AddSingleton<IYourService, YourService>();
-   ```
-4. Inject into ViewModels via constructor
+### Add localized text
+1. Add the resource key/value in English
+2. Add the Dutch translation
+3. Verify both languages in the affected UI
 
-### Adding Localized Strings
-1. Add to `AppResources.resx`: key="YourKey", value="English text"
-2. Add to `AppResources.nl-NL.resx`: key="YourKey", value="Dutch translation"
-3. Access via `_localizationService.GetString("YourKey")`
-
----
-
-## Platform-Specific Notes
-
-### Android
-- Test audio on real device (emulator audio can be unreliable)
-- Ensure app icon displays correctly in launcher
-- Check permissions in `AndroidManifest.xml` if needed
-
-### iOS
-- Test splash screen timing (may need adjustment)
-- Verify app icon for all sizes (App Store requirements)
-- Test on both iPhone and iPad if possible
-
-### Windows
-- Ensure clock rendering is smooth (GPU acceleration)
-- Test keyboard navigation (Enter to submit, Tab between controls)
-
----
-
-## Git Workflow
-
-- Commit frequently with clear messages
-- Reference tasks from PROJECT_PLAN.md in commits
-- Update PROJECT_PLAN.md checkboxes as tasks complete
-- Update ARCHITECTURE.md if design changes
-
----
-
-## Documentation Maintenance
-
-When completing a task:
-1. **Update PROJECT_PLAN.md**: Mark task as complete (`[x]`)
-2. **Update ARCHITECTURE.md**: Add new components, update diagrams
-3. **Add notes in PROJECT_PLAN.md**: Document any deviations or decisions
-
-When starting a new phase:
-1. **Review PROJECT_PLAN.md**: Understand dependencies
-2. **Check ARCHITECTURE.md**: Understand current structure
-3. **Ask for clarification** if anything is unclear
+### Change web/PWA assets
+1. Check whether the asset lives in `Clock_Exerciser.Web.Client`, `Clock_Exerciser.Web`, or `Clock_Exerciser.Shared`
+2. Confirm the resulting path works in hosted WebAssembly
+3. Consider service-worker/static-web-assets implications
 
 ---
 
 ## Communication Style
+- Be concise and direct
+- Explain why a change is needed when it is not obvious
+- Offer alternatives only when there is a real tradeoff
+- Do not invent architecture details not reflected in the code
 
-When presenting changes:
-- ? Be concise and direct
-- ? Show code snippets for clarity
-- ? Explain *why* a decision was made (not just *what* changed)
-- ? Offer alternatives if multiple approaches exist
-- ? Avoid long explanations unless requested
-- ? Don't ask for permission to use tools (just use them)
+---
+
+## File Editing Guidelines
+- When editing repository files, do not use the terminal as a fallback if file-editing tools are expected; use direct file editing and verify the result.
 
 ---
 
 ## Quick Reference
 
-| Task | Command/Pattern |
-|------|-----------------|
-| Read project docs | Check `Documents/*.md` **first** |
-| Add localized string | AppResources.resx + AppResources.nl-NL.resx |
-| Register service | `builder.Services.Add*<Interface, Implementation>()` |
-| Navigate | `await Shell.Current.GoToAsync("///route")` |
-| Play audio | `await _audioService.PlaySuccessSound()` |
-| Parse Dutch time | `_dutchTimeParser.Parse("kwart over vijf")` |
-| Scale clock value | `ConvertToDialValue(minutes)` |
+| Task | Guidance |
+|------|----------|
+| Small bug fix | Read the relevant code first; consult docs only if needed |
+| Feature or architecture change | Review `Documents/PROJECT_PLAN.md` and `Documents/ARCHITECTURE.md` |
+| Web/PWA asset fix | Check `index.html`, service worker, and static web assets |
+| Add shared logic | Prefer `Clock_Exerciser.Core` |
+| Add shared UI | Prefer `Clock_Exerciser.Shared` |
+| Add host-specific registration | Update the corresponding `Program.cs` / `MauiProgram.cs` |
 
 ---
 
-**Last Updated**: [Current Date]
-**Project Version**: 0.1.0-alpha
+**Last Updated**: 2026-05-17

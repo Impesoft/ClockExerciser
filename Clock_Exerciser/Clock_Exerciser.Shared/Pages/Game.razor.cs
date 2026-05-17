@@ -6,11 +6,11 @@ using Microsoft.JSInterop;
 
 namespace Clock_Exerciser.Shared.Pages;
 
-public partial class Game : IDisposable
+public partial class Game : IAsyncDisposable
 {
     private GameMode? _loadedMode;
     private AnswerInput? answerInput;
-    private ElementReference submitButton;
+    private IJSObjectReference? _keyboardHelperModule;
 
     [Inject]
     private ClockExerciseState State { get; set; } = default!;
@@ -43,22 +43,50 @@ public partial class Game : IDisposable
         }
     }
 
-    public void Dispose()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        _keyboardHelperModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+            "import",
+            "./_content/Clock_Exerciser.Shared/keyboardHelper.js");
+    }
+
+    public async ValueTask DisposeAsync()
     {
         State.StopClock();
         State.StateChanged -= OnStateChanged;
+
+        if (_keyboardHelperModule is not null)
+        {
+            try
+            {
+                await _keyboardHelperModule.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
     }
 
     private async Task OnPrimaryActionAsync()
     {
-        // Focus the button to dismiss keyboard (Android will auto-hide keyboard when input loses focus)
         try
         {
-            await JSRuntime.InvokeVoidAsync("eval", "arguments[0].focus()", submitButton);
+            if (_keyboardHelperModule is null)
+            {
+                _keyboardHelperModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import",
+                    "./_content/Clock_Exerciser.Shared/keyboardHelper.js");
+            }
+
+            await _keyboardHelperModule.InvokeVoidAsync("dismissKeyboard");
         }
         catch
         {
-            // Silently fail - not critical
         }
 
         await State.ExecutePrimaryActionAsync();

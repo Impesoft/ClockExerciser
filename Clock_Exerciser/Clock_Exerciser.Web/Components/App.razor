@@ -4,11 +4,18 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#2196F3" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Clock Exerciser" />
     <base href="/" />
     <ResourcePreloader />
     <link rel="stylesheet" href="_content/Clock_Exerciser.Shared/app.css" />
     <link rel="stylesheet" href="Clock_Exerciser.Web.styles.css" />
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
     <ImportMap />
     <HeadOutlet @rendermode="InteractiveServer" />
 </head>
@@ -17,6 +24,13 @@
     <Routes @rendermode="InteractiveServer" />
     <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script>
+        if ('serviceWorker' in navigator && (window.isSecureContext || window.location.hostname === 'localhost')) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js', { updateViaCache: 'none' });
+            });
+        }
+    </script>
 </body>
 
 </html>
